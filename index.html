@@ -777,19 +777,62 @@ window.addEventListener('load', () => {
 // ══════════════════════════════════════
 // SIGNUP
 // ══════════════════════════════════════
-function handleSignup() {
-  const email = document.getElementById('f-email').value.trim();
-  if(!email || !email.includes('@')) {
-    document.getElementById('f-email').style.borderColor='var(--red)';
-    setTimeout(()=>document.getElementById('f-email').style.borderColor='',1500);
+
+const RV_WORKER = "https://rv-signup.amusementstandards.workers.dev";
+
+async function submitSignup({ name, email, type, vertical, source, formId, successId, btnSelector }) {
+  if (!email || !email.includes("@")) {
+    const input = document.querySelector('#' + formId + ' input[type="email"]');
+    if (input) {
+      input.style.borderColor = "var(--red)";
+      setTimeout(() => input.style.borderColor = "", 1800);
+    }
     return;
   }
-  document.getElementById('signup-form').style.display='none';
-  document.getElementById('success-msg').style.display='block';
-  console.log('Signup:',{name:document.getElementById('f-name').value,email,type:document.getElementById('f-type').value});
+  const btn = btnSelector ? document.querySelector(btnSelector) : null;
+  const origTxt = btn ? btn.textContent : "";
+  if (btn) { btn.textContent = "Sending…"; btn.disabled = true; btn.style.opacity = "0.6"; }
+  try {
+    const res = await fetch(RV_WORKER, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, type, vertical, source }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Unknown error");
+    const formEl = document.getElementById(formId);
+    const succEl = document.getElementById(successId);
+    if (formEl) formEl.style.display = "none";
+    if (succEl) { succEl.style.display = "block"; succEl.textContent = "\u2713 You\u2019re on the list. We\u2019ll be in touch at launch."; }
+  } catch(e) {
+    console.error("Signup error:", e);
+    if (btn) {
+      btn.textContent = "Try Again";
+      btn.disabled = false;
+      btn.style.opacity = "1";
+      btn.style.background = "var(--red)";
+      btn.style.color = "#fff";
+      setTimeout(() => { btn.textContent = origTxt; btn.style.background = ""; btn.style.color = ""; }, 3000);
+    }
+  }
 }
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('f-email').addEventListener('keydown',e=>{if(e.key==='Enter')handleSignup();});
+
+function handleSignup() {
+  submitSignup({
+    name:      document.getElementById('f-name').value.trim(),
+    email:     document.getElementById('f-email').value.trim().toLowerCase(),
+    type:      document.getElementById('f-type').value || 'unknown',
+    vertical:  'all',
+    source:    'index',
+    formId:    'signup-form',
+    successId: 'success-msg',
+    btnSelector: '#signup-form .f-btn',
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('f-email').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSignup();
+  });
 });
 </script>
 </body>
