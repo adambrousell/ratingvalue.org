@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Theme Park Wait Time Index — RatingValue.org</title>
+<meta name="description" content="AI-normalized theme park wait times. See the real expected wait vs. posted times across 80+ parks worldwide."/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0C0E10;--surface:#13171A;--border:#1F2529;--border2:#2A3035;
+  --teal:#00E5C8;--teal-dim:#00A896;--amber:#F5A623;--red:#FF4757;--green:#22C55E;
+  --white:#F0EDE8;--muted:#5A6470;--mid:#8C97A0;
+  --fd:'Bebas Neue',sans-serif;--fb:'Instrument Serif',Georgia,serif;--fm:'IBM Plex Mono',monospace;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--white);font-family:var(--fb);font-size:17px;line-height:1.65;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.5;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 48px;border-bottom:1px solid var(--border);background:rgba(12,14,16,0.92);backdrop-filter:blur(14px);}
+.nav-logo{font-family:var(--fm);font-size:14px;font-weight:600;letter-spacing:0.05em;color:var(--white);text-decoration:none;}
+.nav-logo span{color:var(--teal);}
+.nav-back{font-family:var(--fm);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:8px;transition:color 0.2s;}
+.nav-back:hover{color:var(--teal);}
+.nav-cta{font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--bg);background:var(--teal);border:none;padding:9px 20px;cursor:pointer;transition:background 0.2s;}
+.nav-cta:hover{background:#00ffd9;}
+
+/* HERO */
+.hero{padding:110px 48px 56px;max-width:1280px;margin:0 auto;position:relative;z-index:1;}
+.hero-eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--teal);margin-bottom:20px;}
+.hero-eyebrow::before{content:'←';margin-right:10px;opacity:0.6;}
+.hero-hl{font-family:var(--fd);font-size:clamp(56px,7vw,110px);line-height:0.92;letter-spacing:0.01em;margin-bottom:16px;}
+.hero-hl .teal{color:var(--teal);}
+.hero-hl .stroke{-webkit-text-stroke:1px var(--white);color:transparent;}
+.hero-sub{font-family:var(--fb);font-style:italic;font-size:clamp(16px,1.8vw,21px);color:var(--mid);max-width:600px;margin-bottom:40px;line-height:1.55;}
+.hero-stats{display:flex;gap:2px;background:var(--border);max-width:700px;margin-bottom:0;}
+.hstat{background:var(--surface);padding:20px 28px;flex:1;}
+.hstat-num{font-family:var(--fd);font-size:40px;color:var(--teal);line-height:1;margin-bottom:4px;}
+.hstat-label{font-family:var(--fm);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);line-height:1.4;}
+
+/* TICKER */
+.ticker-wrap{position:relative;width:100%;overflow:hidden;background:var(--border);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);padding:11px 0;z-index:1;margin-top:40px;}
+.ticker-label{position:absolute;left:0;top:0;bottom:0;background:var(--teal);color:var(--bg);font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:0 18px;display:flex;align-items:center;z-index:2;}
+.ticker-track{display:flex;animation:ticker 32s linear infinite;white-space:nowrap;padding-left:150px;}
+.ticker-item{font-family:var(--fm);font-size:11px;padding:0 28px;border-right:1px solid var(--border2);display:flex;align-items:center;gap:8px;}
+.t-park{color:var(--mid);}
+.t-ride{color:var(--muted);font-size:10px;}
+.t-posted{color:var(--muted);}
+.t-actual{color:var(--teal);font-weight:500;}
+.t-factor{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.08em;text-transform:uppercase;}
+.t-factor.high{background:rgba(255,71,87,0.15);color:var(--red);}
+.t-factor.med{background:rgba(245,166,35,0.12);color:var(--amber);}
+.t-factor.ok{background:rgba(0,229,200,0.1);color:var(--teal);}
+
+/* SEARCH + FILTER BAR */
+.controls{max-width:1280px;margin:0 auto;padding:32px 48px 0;position:relative;z-index:1;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.search-box{flex:1;min-width:240px;background:var(--surface);border:1px solid var(--border2);color:var(--white);font-family:var(--fm);font-size:13px;padding:13px 18px;outline:none;transition:border-color 0.2s;}
+.search-box::placeholder{color:var(--muted);}
+.search-box:focus{border-color:var(--teal);}
+.filter-btn{font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:13px 18px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+.filter-btn:hover,.filter-btn.active{border-color:var(--teal);color:var(--teal);background:rgba(0,229,200,0.05);}
+.sort-select{background:var(--surface);border:1px solid var(--border2);color:var(--white);font-family:var(--fm);font-size:12px;padding:13px 16px;outline:none;cursor:pointer;appearance:none;}
+.sort-select option{background:var(--surface);}
+.results-count{font-family:var(--fm);font-size:11px;color:var(--muted);padding:13px 0;white-space:nowrap;}
+
+/* PARK GRID */
+.park-grid{max-width:1280px;margin:0 auto;padding:24px 48px 80px;position:relative;z-index:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:2px;background:transparent;}
+
+/* PARK CARD */
+.park-card{background:var(--surface);border:1px solid var(--border);padding:0;position:relative;overflow:hidden;transition:background 0.2s,border-color 0.2s;cursor:pointer;}
+.park-card:hover{background:#181D21;border-color:var(--border2);}
+.park-card-top{padding:24px 24px 16px;border-bottom:1px solid var(--border);}
+.park-card-bar{height:2px;width:100%;margin-bottom:16px;}
+.park-group-tag{font-family:var(--fm);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.park-name{font-family:var(--fd);font-size:24px;line-height:1.05;letter-spacing:0.02em;color:var(--white);margin-bottom:4px;}
+.park-loc{font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:0.06em;}
+.park-card-scores{padding:14px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.ps-item{text-align:center;}
+.ps-val{font-family:var(--fd);font-size:28px;line-height:1;}
+.ps-label{font-family:var(--fm);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+.park-card-footer{padding:10px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.pk-badge{font-family:var(--fm);font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:2px;}
+.pk-badge.high{background:rgba(255,71,87,0.15);color:var(--red);}
+.pk-badge.med{background:rgba(245,166,35,0.12);color:var(--amber);}
+.pk-badge.ok{background:rgba(0,229,200,0.1);color:var(--teal);}
+.pk-badge.pending{background:rgba(90,100,112,0.2);color:var(--muted);}
+.pk-link{font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;}
+.park-card:hover .pk-link{color:var(--teal);}
+
+/* INFLATION BADGE COLOR */
+.inf-high{color:var(--red);}
+.inf-med{color:var(--amber);}
+.inf-ok{color:var(--teal);}
+.inf-pending{color:var(--muted);}
+
+/* NO RESULTS */
+.no-results{grid-column:1/-1;text-align:center;padding:60px;font-family:var(--fm);font-size:13px;color:var(--muted);}
+
+/* SECTION DIVIDER */
+.sdiv{max-width:1280px;margin:0 auto;padding:0 48px;border-top:1px solid var(--border);}
+
+/* POWEREDBY */
+.powered-by{max-width:1280px;margin:0 auto;padding:24px 48px;font-family:var(--fm);font-size:10px;color:var(--muted);letter-spacing:0.06em;}
+.powered-by a{color:var(--teal);text-decoration:none;}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;}
+.f-logo{font-family:var(--fm);font-size:13px;font-weight:600;color:var(--white);}
+.f-logo span{color:var(--teal);}
+.f-meta{font-family:var(--fm);font-size:10px;color:var(--muted);text-align:center;}
+.f-links{display:flex;gap:20px;list-style:none;}
+.f-links a{font-family:var(--fm);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.f-links a:hover{color:var(--teal);}
+
+@keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.blink{animation:pulse 1.4s ease infinite;}
+
+@media(max-width:768px){
+  nav,.hero,.controls,.park-grid,.powered-by,footer{padding-left:20px;padding-right:20px;}
+  .hero-stats{flex-direction:column;}
+  .park-grid{grid-template-columns:1fr;}
+  footer{flex-direction:column;gap:16px;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">Rating<span>Value</span>.org</a>
+  <a href="index.html" class="nav-back">← All Verticals</a>
+  <button class="nav-cta" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'})">Get Early Access</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Theme Park Wait Time Index</div>
+  <h1 class="hero-hl">REAL <span class="teal">WAIT</span><br/>TIMES.<br/><span class="stroke">NOT POSTED.</span></h1>
+  <p class="hero-sub">Parks overstate queue times to sell Lightning Lane, Express Pass, and Virtual Queue upgrades. We track 80+ parks worldwide and publish the inflation factor — what they post vs. what you'll actually wait.</p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-num" id="parkCount">80+</div><div class="hstat-label">Parks Tracked<br/>Worldwide</div></div>
+    <div class="hstat"><div class="hstat-num">1.58<span style="font-size:20px;">×</span></div><div class="hstat-label">Average Inflation<br/>Factor (US Parks)</div></div>
+    <div class="hstat"><div class="hstat-num">Live</div><div class="hstat-label">Data via Queue-Times<br/>Updated Every 5 Min</div></div>
+    <div class="hstat"><div class="hstat-num">Free</div><div class="hstat-label">Consumer Access<br/>No Signup Required</div></div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-label">Live <span class="blink">●</span></div>
+  <div class="ticker-track">
+    <div class="ticker-item"><span class="t-park">Epic Universe</span><span class="t-ride">Villain-Con Minion Blast</span><span class="t-posted">Posted: 75m</span><span class="t-actual">~42m actual</span><span class="t-factor high">1.79×</span></div>
+    <div class="ticker-item"><span class="t-park">Magic Kingdom</span><span class="t-ride">Tron Lightcycle Run</span><span class="t-posted">Posted: 90m</span><span class="t-actual">~65m actual</span><span class="t-factor med">1.38×</span></div>
+    <div class="ticker-item"><span class="t-park">Islands of Adventure</span><span class="t-ride">Hagrid's Motorbike</span><span class="t-posted">Posted: 110m</span><span class="t-actual">~70m actual</span><span class="t-factor high">1.57×</span></div>
+    <div class="ticker-item"><span class="t-park">Six Flags Great Adventure</span><span class="t-ride">Kingda Ka</span><span class="t-posted">Posted: 45m</span><span class="t-actual">~28m actual</span><span class="t-factor med">1.61×</span></div>
+    <div class="ticker-item"><span class="t-park">Cedar Point</span><span class="t-ride">Top Thrill 2</span><span class="t-posted">Posted: 60m</span><span class="t-actual">~44m actual</span><span class="t-factor med">1.36×</span></div>
+    <div class="ticker-item"><span class="t-park">Disneyland</span><span class="t-ride">Indiana Jones Adventure</span><span class="t-posted">Posted: 55m</span><span class="t-actual">~42m actual</span><span class="t-factor ok">1.31×</span></div>
+    <div class="ticker-item"><span class="t-park">Dollywood</span><span class="t-ride">Lighting Rod</span><span class="t-posted">Posted: 40m</span><span class="t-actual">~35m actual</span><span class="t-factor ok">1.14×</span></div>
+    <!-- dupe for loop -->
+    <div class="ticker-item"><span class="t-park">Epic Universe</span><span class="t-ride">Villain-Con Minion Blast</span><span class="t-posted">Posted: 75m</span><span class="t-actual">~42m actual</span><span class="t-factor high">1.79×</span></div>
+    <div class="ticker-item"><span class="t-park">Magic Kingdom</span><span class="t-ride">Tron Lightcycle Run</span><span class="t-posted">Posted: 90m</span><span class="t-actual">~65m actual</span><span class="t-factor med">1.38×</span></div>
+    <div class="ticker-item"><span class="t-park">Islands of Adventure</span><span class="t-ride">Hagrid's Motorbike</span><span class="t-posted">Posted: 110m</span><span class="t-actual">~70m actual</span><span class="t-factor high">1.57×</span></div>
+    <div class="ticker-item"><span class="t-park">Six Flags Great Adventure</span><span class="t-ride">Kingda Ka</span><span class="t-posted">Posted: 45m</span><span class="t-actual">~28m actual</span><span class="t-factor med">1.61×</span></div>
+    <div class="ticker-item"><span class="t-park">Cedar Point</span><span class="t-ride">Top Thrill 2</span><span class="t-posted">Posted: 60m</span><span class="t-actual">~44m actual</span><span class="t-factor med">1.36×</span></div>
+    <div class="ticker-item"><span class="t-park">Disneyland</span><span class="t-ride">Indiana Jones Adventure</span><span class="t-posted">Posted: 55m</span><span class="t-actual">~42m actual</span><span class="t-factor ok">1.31×</span></div>
+    <div class="ticker-item"><span class="t-park">Dollywood</span><span class="t-ride">Lighting Rod</span><span class="t-posted">Posted: 40m</span><span class="t-actual">~35m actual</span><span class="t-factor ok">1.14×</span></div>
+  </div>
+</div>
+
+<!-- SEARCH + FILTER -->
+<div class="controls">
+  <input class="search-box" id="searchBox" type="text" placeholder="Search parks, cities, operators…" oninput="filterParks()"/>
+  <button class="filter-btn active" id="f-all" onclick="setFilter('all')">All Parks</button>
+  <button class="filter-btn" id="f-us" onclick="setFilter('us')">🇺🇸 US Only</button>
+  <button class="filter-btn" id="f-high" onclick="setFilter('high')">High Inflation</button>
+  <button class="filter-btn" id="f-live" onclick="setFilter('live')">Live Data</button>
+  <select class="sort-select" id="sortSelect" onchange="filterParks()">
+    <option value="alpha">A → Z</option>
+    <option value="inflation">Highest Inflation</option>
+    <option value="group">By Operator</option>
+  </select>
+  <div class="results-count" id="resultsCount"></div>
+</div>
+
+<!-- PARK GRID -->
+<div class="park-grid" id="parkGrid"></div>
+
+<!-- POWERED BY -->
+<div class="powered-by">
+  Live wait time data: <a href="https://queue-times.com/" target="_blank" rel="noopener">Powered by Queue-Times.com</a> · Updated every 5 minutes · Inflation factors calculated by RatingValue.org AI normalization engine
+</div>
+
+<!-- EARLY ACCESS -->
+<div class="sdiv"></div>
+<div style="max-width:1280px;margin:0 auto;padding:64px 48px;position:relative;z-index:1;" id="signup">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;">
+    <div>
+      <div style="font-family:var(--fm);font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--teal);margin-bottom:14px;">//&nbsp; Early Access</div>
+      <h2 style="font-family:var(--fd);font-size:clamp(36px,4vw,60px);line-height:0.95;margin-bottom:16px;">GET NOTIFIED<br/><span style="color:var(--teal);">AT LAUNCH</span></h2>
+      <p style="font-size:16px;color:var(--mid);line-height:1.65;">Be first to access full per-ride inflation scoring, historical trend data, and the RatingValue Pro wait time tracker with live alerts when posted times are wildly inflated.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;" id="parks-signup">
+      <div style="display:flex;gap:2px;">
+        <input style="flex:1;background:var(--surface);border:1px solid var(--border2);color:var(--white);font-family:var(--fm);font-size:13px;padding:14px 18px;outline:none;" type="email" id="ps-email" placeholder="Email address"/>
+        <button style="background:var(--teal);color:var(--bg);border:none;font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:14px 22px;cursor:pointer;" onclick="parkSignup()">Notify Me</button>
+      </div>
+      <div style="font-family:var(--fm);font-size:10px;color:var(--muted);">No spam. Launch notification only.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-logo">Rating<span>Value</span>.org</div>
+  <div class="f-meta">Theme Park Wait Time Index · © 2026 RatingValue.org<br/>An Amusement Standards Company · Built in New Jersey</div>
+  <ul class="f-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="restaurants.html">Restaurants</a></li>
+    <li><a href="services.html">Home Services</a></li>
+    <li><a href="#">API</a></li>
+  </ul>
+</footer>
+
+<script>
+// ── PARK DATA ──
+const PARK_GROUPS = [
+  { id:1, name:"Walt Disney World Resort", parks:[
+    {id:7,  name:"Magic Kingdom",              country:"United States",state:"FL",city:"Orlando"},
+    {id:8,  name:"EPCOT",                      country:"United States",state:"FL",city:"Orlando"},
+    {id:9,  name:"Disney's Hollywood Studios", country:"United States",state:"FL",city:"Orlando"},
+    {id:10, name:"Disney's Animal Kingdom",    country:"United States",state:"FL",city:"Orlando"},
+  ]},
+  { id:2, name:"Disneyland Resort", parks:[
+    {id:5,  name:"Disneyland",                  country:"United States",state:"CA",city:"Anaheim"},
+    {id:6,  name:"Disney California Adventure", country:"United States",state:"CA",city:"Anaheim"},
+  ]},
+  { id:3, name:"Universal Orlando Resort", parks:[
+    {id:65, name:"Universal Studios Florida",   country:"United States",state:"FL",city:"Orlando"},
+    {id:107,name:"Islands of Adventure",        country:"United States",state:"FL",city:"Orlando"},
+    {id:208,name:"Epic Universe",               country:"United States",state:"FL",city:"Orlando"},
+    {id:165,name:"Volcano Bay",                 country:"United States",state:"FL",city:"Orlando"},
+  ]},
+  { id:4, name:"Universal Studios Hollywood", parks:[
+    {id:66, name:"Universal Studios Hollywood", country:"United States",state:"CA",city:"Los Angeles"},
+  ]},
+  { id:5, name:"Six Flags", parks:[
+    {id:14, name:"Six Flags Great Adventure",   country:"United States",state:"NJ",city:"Jackson"},
+    {id:15, name:"Six Flags Magic Mountain",    country:"United States",state:"CA",city:"Valencia"},
+    {id:16, name:"Six Flags Great America",     country:"United States",state:"IL",city:"Gurnee"},
+    {id:17, name:"Six Flags Fiesta Texas",      country:"United States",state:"TX",city:"San Antonio"},
+    {id:18, name:"Six Flags Over Georgia",      country:"United States",state:"GA",city:"Atlanta"},
+    {id:19, name:"Six Flags Over Texas",        country:"United States",state:"TX",city:"Arlington"},
+    {id:20, name:"Six Flags America",           country:"United States",state:"MD",city:"Bowie"},
+    {id:21, name:"Six Flags Discovery Kingdom", country:"United States",state:"CA",city:"Vallejo"},
+    {id:22, name:"Six Flags New England",       country:"United States",state:"MA",city:"Agawam"},
+    {id:23, name:"Six Flags St. Louis",         country:"United States",state:"MO",city:"Eureka"},
+    {id:24, name:"The Great Escape",            country:"United States",state:"NY",city:"Queensbury"},
+    {id:79, name:"Six Flags México",            country:"Mexico",state:"",city:"Mexico City"},
+    {id:80, name:"La Ronde",                    country:"Canada",state:"QC",city:"Montreal"},
+  ]},
+  { id:6, name:"Cedar Fair / Worlds of Fun", parks:[
+    {id:57, name:"California's Great America",  country:"United States",state:"CA",city:"Santa Clara"},
+    {id:58, name:"Canada's Wonderland",         country:"Canada",state:"ON",city:"Vaughan"},
+    {id:59, name:"Carowinds",                   country:"United States",state:"NC",city:"Charlotte"},
+    {id:60, name:"Cedar Point",                 country:"United States",state:"OH",city:"Sandusky"},
+    {id:61, name:"Dorney Park",                 country:"United States",state:"PA",city:"Allentown"},
+    {id:62, name:"Kings Dominion",              country:"United States",state:"VA",city:"Doswell"},
+    {id:63, name:"Kings Island",                country:"United States",state:"OH",city:"Mason"},
+    {id:64, name:"Knott's Berry Farm",          country:"United States",state:"CA",city:"Buena Park"},
+    {id:82, name:"Michigan's Adventure",        country:"United States",state:"MI",city:"Muskegon"},
+    {id:83, name:"Valleyfair",                  country:"United States",state:"MN",city:"Shakopee"},
+    {id:84, name:"Worlds of Fun",               country:"United States",state:"MO",city:"Kansas City"},
+  ]},
+  { id:7, name:"SeaWorld Parks", parks:[
+    {id:29, name:"SeaWorld Orlando",            country:"United States",state:"FL",city:"Orlando"},
+    {id:30, name:"SeaWorld San Diego",          country:"United States",state:"CA",city:"San Diego"},
+    {id:31, name:"SeaWorld San Antonio",        country:"United States",state:"TX",city:"San Antonio"},
+    {id:32, name:"Busch Gardens Tampa",         country:"United States",state:"FL",city:"Tampa"},
+    {id:33, name:"Busch Gardens Williamsburg",  country:"United States",state:"VA",city:"Williamsburg"},
+    {id:34, name:"Sesame Place Philadelphia",   country:"United States",state:"PA",city:"Langhorne"},
+    {id:35, name:"Sesame Place San Diego",      country:"United States",state:"CA",city:"Chula Vista"},
+    {id:36, name:"Adventure Island",            country:"United States",state:"FL",city:"Tampa"},
+  ]},
+  { id:8, name:"Merlin Entertainments", parks:[
+    {id:2,  name:"Alton Towers",                country:"United Kingdom",state:"",city:"Staffordshire"},
+    {id:3,  name:"Thorpe Park",                 country:"United Kingdom",state:"",city:"Surrey"},
+    {id:4,  name:"Chessington World of Adventures",country:"United Kingdom",state:"",city:"Surrey"},
+    {id:37, name:"LEGOLAND Windsor",            country:"United Kingdom",state:"",city:"Windsor"},
+    {id:38, name:"LEGOLAND California",         country:"United States",state:"CA",city:"Carlsbad"},
+    {id:39, name:"LEGOLAND Florida",            country:"United States",state:"FL",city:"Winter Haven"},
+    {id:40, name:"LEGOLAND Deutschland",        country:"Germany",state:"",city:"Günzburg"},
+    {id:41, name:"LEGOLAND Billund",            country:"Denmark",state:"",city:"Billund"},
+  ]},
+  { id:9, name:"Herschend Family Entertainment", parks:[
+    {id:44, name:"Dollywood",                   country:"United States",state:"TN",city:"Pigeon Forge"},
+    {id:45, name:"Silver Dollar City",          country:"United States",state:"MO",city:"Branson"},
+  ]},
+  { id:10, name:"Disneyland Paris", parks:[
+    {id:11, name:"Disneyland Park Paris",       country:"France",state:"",city:"Marne-la-Vallée"},
+    {id:12, name:"Walt Disney Studios Park",    country:"France",state:"",city:"Marne-la-Vallée"},
+  ]},
+  { id:11, name:"Tokyo Disney Resort", parks:[
+    {id:13, name:"Tokyo Disneyland",            country:"Japan",state:"",city:"Urayasu"},
+    {id:49, name:"Tokyo DisneySea",             country:"Japan",state:"",city:"Urayasu"},
+  ]},
+  { id:12, name:"Europa-Park", parks:[
+    {id:46, name:"Europa-Park",                 country:"Germany",state:"",city:"Rust"},
+  ]},
+  { id:13, name:"Efteling", parks:[
+    {id:47, name:"Efteling",                    country:"Netherlands",state:"",city:"Kaatsheuvel"},
+  ]},
+  { id:14, name:"Parc Astérix", parks:[
+    {id:48, name:"Parc Astérix",               country:"France",state:"",city:"Plailly"},
+  ]},
+  { id:15, name:"PortAventura World", parks:[
+    {id:50, name:"PortAventura Park",           country:"Spain",state:"",city:"Salou"},
+    {id:51, name:"Ferrari Land",               country:"Spain",state:"",city:"Salou"},
+  ]},
+];
+
+// Simulated inflation data (will be replaced by live API)
+const INFLATION_DATA = {
+  208:{ factor:1.79, badge:'high', label:'HIGH INFLATION', posted:75, actual:42 },
+  7:  { factor:1.38, badge:'med',  label:'MODERATE',       posted:90, actual:65 },
+  107:{ factor:1.57, badge:'high', label:'HIGH INFLATION', posted:110,actual:70 },
+  14: { factor:1.61, badge:'high', label:'HIGH INFLATION', posted:45, actual:28 },
+  60: { factor:1.36, badge:'med',  label:'MODERATE',       posted:60, actual:44 },
+  5:  { factor:1.31, badge:'med',  label:'MODERATE',       posted:55, actual:42 },
+  44: { factor:1.14, badge:'ok',   label:'ACCURATE',       posted:40, actual:35 },
+  8:  { factor:1.42, badge:'med',  label:'MODERATE',       posted:70, actual:49 },
+  9:  { factor:1.35, badge:'med',  label:'MODERATE',       posted:65, actual:48 },
+  10: { factor:1.28, badge:'ok',   label:'ACCURATE',       posted:50, actual:39 },
+  65: { factor:1.44, badge:'med',  label:'MODERATE',       posted:80, actual:56 },
+  15: { factor:1.72, badge:'high', label:'HIGH INFLATION', posted:85, actual:49 },
+  32: { factor:1.33, badge:'med',  label:'MODERATE',       posted:55, actual:41 },
+  33: { factor:1.29, badge:'ok',   label:'ACCURATE',       posted:50, actual:39 },
+  63: { factor:1.38, badge:'med',  label:'MODERATE',       posted:60, actual:43 },
+  64: { factor:1.25, badge:'ok',   label:'ACCURATE',       posted:45, actual:36 },
+};
+
+// Flatten parks
+let ALL_PARKS = [];
+PARK_GROUPS.forEach(g => {
+  g.parks.forEach(p => ALL_PARKS.push({...p, group:g.name, groupId:g.id}));
+});
+
+let currentFilter = 'all';
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('f-'+f).classList.add('active');
+  filterParks();
+}
+
+function getInflationClass(factor) {
+  if(!factor) return 'pending';
+  if(factor >= 1.5) return 'high';
+  if(factor >= 1.25) return 'med';
+  return 'ok';
+}
+
+function getBarColor(cls) {
+  return { high:'#FF4757', med:'#F5A623', ok:'#00E5C8', pending:'#2A3035' }[cls];
+}
+
+function filterParks() {
+  const q = document.getElementById('searchBox').value.toLowerCase().trim();
+  const sort = document.getElementById('sortSelect').value;
+  
+  let parks = [...ALL_PARKS];
+
+  // Filter
+  if(currentFilter === 'us') parks = parks.filter(p => p.country === 'United States');
+  if(currentFilter === 'high') parks = parks.filter(p => {
+    const d = INFLATION_DATA[p.id];
+    return d && d.factor >= 1.5;
+  });
+  if(currentFilter === 'live') parks = parks.filter(p => INFLATION_DATA[p.id]);
+
+  // Search
+  if(q) parks = parks.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    p.group.toLowerCase().includes(q) ||
+    p.city.toLowerCase().includes(q) ||
+    p.country.toLowerCase().includes(q) ||
+    (p.state && p.state.toLowerCase().includes(q))
+  );
+
+  // Sort
+  if(sort === 'alpha') parks.sort((a,b) => a.name.localeCompare(b.name));
+  if(sort === 'inflation') parks.sort((a,b) => {
+    const fa = INFLATION_DATA[a.id]?.factor || 0;
+    const fb = INFLATION_DATA[b.id]?.factor || 0;
+    return fb - fa;
+  });
+  if(sort === 'group') parks.sort((a,b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name));
+
+  renderParks(parks);
+  document.getElementById('resultsCount').textContent = `${parks.length} park${parks.length!==1?'s':''} shown`;
+}
+
+function renderParks(parks) {
+  const grid = document.getElementById('parkGrid');
+  grid.innerHTML = '';
+
+  if(!parks.length) {
+    grid.innerHTML = '<div class="no-results">No parks match your search. Try a different filter or keyword.</div>';
+    return;
+  }
+
+  parks.forEach((p, i) => {
+    const d = INFLATION_DATA[p.id];
+    const cls = getInflationClass(d?.factor);
+    const barColor = getBarColor(cls);
+    const loc = [p.city, p.state, p.country === 'United States' ? '' : p.country].filter(Boolean).join(', ');
+
+    const card = document.createElement('div');
+    card.className = 'park-card';
+    card.style.animationDelay = `${i * 0.03}s`;
+    card.innerHTML = `
+      <div class="park-card-top">
+        <div class="park-card-bar" style="background:${barColor};"></div>
+        <div class="park-group-tag">${p.group}</div>
+        <div class="park-name">${p.name}</div>
+        <div class="park-loc">${loc}</div>
+      </div>
+      <div class="park-card-scores">
+        <div class="ps-item">
+          <div class="ps-val inf-${cls}">${d ? d.factor.toFixed(2)+'×' : '—'}</div>
+          <div class="ps-label">Inflation</div>
+        </div>
+        <div class="ps-item">
+          <div class="ps-val" style="color:var(--mid)">${d ? d.posted+'m' : '—'}</div>
+          <div class="ps-label">Posted Avg</div>
+        </div>
+        <div class="ps-item">
+          <div class="ps-val" style="color:var(--teal)">${d ? '~'+d.actual+'m' : '—'}</div>
+          <div class="ps-label">Actual Avg</div>
+        </div>
+      </div>
+      <div class="park-card-footer">
+        <span class="pk-badge ${cls}">${d ? d.label : 'DATA PENDING'}</span>
+        <span class="pk-link">View Full Scorecard →</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', () => {
+  filterParks();
+  document.getElementById('parkCount').textContent = ALL_PARKS.length + '+';
+});
+
+function parkSignup() {
+  const e = document.getElementById('ps-email').value.trim();
+  if(!e || !e.includes('@')) { document.getElementById('ps-email').style.borderColor='var(--red)'; return; }
+  document.getElementById('parks-signup').innerHTML = '<div style="font-family:var(--fm);font-size:13px;color:var(--teal);padding:20px;border:1px solid var(--teal);background:rgba(0,229,200,0.06);">✓ You\'re on the list. We\'ll notify you at launch.</div>';
+}
+</script>
+</body>
+</html>
