@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RatingValue.org — The Truth Behind the Score</title>
+<meta name="description" content="AI-powered rating normalization. See what scores really mean, corrected for fraud, inflation, and manipulation."/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0C0E10;
+  --surface:  #13171A;
+  --border:   #1F2529;
+  --border2:  #2A3035;
+  --teal:     #00E5C8;
+  --teal-dim: #00A896;
+  --amber:    #F5A623;
+  --red:      #FF4757;
+  --white:    #F0EDE8;
+  --muted:    #5A6470;
+  --mid:      #8C97A0;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body:    'Instrument Serif', Georgia, serif;
+  --font-mono:    'IBM Plex Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.65;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+/* ── SCANLINES ── */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 48px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(12,14,16,0.85);
+  backdrop-filter: blur(12px);
+}
+.nav-logo {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--white);
+  text-decoration: none;
+}
+.nav-logo span { color: var(--teal); }
+.nav-links {
+  display: flex; gap: 36px; list-style: none;
+}
+.nav-links a {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--teal); }
+.nav-cta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--teal);
+  border: none;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.nav-cta:hover { background: #00ffd9; transform: translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 120px 48px 80px;
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.2s;
+}
+.hero-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px; height: 1px;
+  background: var(--teal);
+  margin-right: 12px;
+  vertical-align: middle;
+}
+
+.hero-headline {
+  font-family: var(--font-display);
+  font-size: clamp(72px, 9vw, 140px);
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+  color: var(--white);
+  margin-bottom: 12px;
+  opacity: 0;
+  animation: fadeUp 0.7s ease forwards 0.35s;
+}
+.hero-headline .teal { color: var(--teal); }
+.hero-headline .stroke {
+  -webkit-text-stroke: 1px var(--white);
+  color: transparent;
+}
+
+.hero-sub {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: clamp(18px, 2vw, 24px);
+  color: var(--mid);
+  max-width: 560px;
+  margin-bottom: 56px;
+  line-height: 1.5;
+  opacity: 0;
+  animation: fadeUp 0.7s ease forwards 0.5s;
+}
+
+/* ── SCORE DEMO WIDGET ── */
+.score-demo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  max-width: 720px;
+  border: 1px solid var(--border2);
+  background: var(--border2);
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards 0.65s;
+}
+
+.score-panel {
+  background: var(--surface);
+  padding: 32px 36px;
+}
+.score-panel .sp-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.score-panel .sp-venue {
+  font-family: var(--font-body);
+  font-size: 17px;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.score-panel .sp-loc {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.score-row {
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--border);
+  padding: 10px 0;
+}
+.score-row:first-of-type { border-top: none; padding-top: 0; }
+.sr-key {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sr-val {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+}
+.sr-val.published { color: var(--white); }
+.sr-val.adjusted { color: var(--teal); }
+.sr-val.warn { color: var(--amber); }
+.sr-val.danger { color: var(--red); }
+
+/* BIG SCORE */
+.big-score-panel {
+  background: var(--surface);
+  padding: 32px 36px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center;
+  border-left: 2px solid var(--teal);
+}
+.big-score-panel .bsp-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 8px;
+}
+.big-score-num {
+  font-family: var(--font-display);
+  font-size: 96px;
+  line-height: 1;
+  color: var(--teal);
+  letter-spacing: 0.02em;
+}
+.big-score-denom {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 4px;
+  margin-bottom: 20px;
+}
+.credibility-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.credibility-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal-dim), var(--teal));
+  border-radius: 2px;
+  width: 0%;
+  transition: width 1.8s cubic-bezier(0.25, 1, 0.5, 1) 1.2s;
+}
+.credibility-fill.animate { width: 74%; }
+.credibility-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+/* ── TICKER ── */
+.ticker-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--border);
+  border-top: 1px solid var(--border2);
+  border-bottom: 1px solid var(--border2);
+  padding: 12px 0;
+  margin-top: 64px;
+  z-index: 1;
+}
+.ticker-label {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--teal);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0 20px;
+  display: flex; align-items: center;
+  z-index: 2;
+}
+.ticker-track {
+  display: flex; gap: 0;
+  animation: ticker 35s linear infinite;
+  white-space: nowrap;
+  padding-left: 160px;
+}
+.ticker-item {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0 36px;
+  border-right: 1px solid var(--border2);
+  display: flex; align-items: center; gap: 10px;
+}
+.ticker-item .t-name { color: var(--mid); }
+.ticker-item .t-pub { color: var(--muted); }
+.ticker-item .t-adj { color: var(--teal); font-weight: 500; }
+.ticker-item .t-tag {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.t-tag.up { background: rgba(0,229,200,0.12); color: var(--teal); }
+.t-tag.down { background: rgba(255,71,87,0.12); color: var(--red); }
+.t-tag.warn { background: rgba(245,166,35,0.12); color: var(--amber); }
+
+/* ── SECTIONS ── */
+section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 96px 48px;
+  position: relative; z-index: 1;
+}
+
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 16px;
+}
+.section-eyebrow::before {
+  content: '//';
+  margin-right: 10px;
+  opacity: 0.5;
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-size: clamp(42px, 5vw, 72px);
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  margin-bottom: 24px;
+}
+h2 .teal { color: var(--teal); }
+h2 .stroke {
+  -webkit-text-stroke: 1px var(--white);
+  color: transparent;
+}
+
+/* ── HOW IT WORKS ── */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  margin-top: 48px;
+  background: var(--border);
+}
+.step {
+  background: var(--surface);
+  padding: 40px 32px;
+  position: relative;
+  transition: background 0.25s;
+}
+.step:hover { background: #181D21; }
+.step-num {
+  font-family: var(--font-display);
+  font-size: 80px;
+  line-height: 1;
+  color: var(--border2);
+  margin-bottom: 16px;
+  transition: color 0.25s;
+}
+.step:hover .step-num { color: var(--teal); }
+.step h3 {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 12px;
+}
+.step p {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--mid);
+}
+
+/* ── VERTICALS ── */
+.verticals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-top: 48px;
+  background: var(--border);
+}
+.vertical-card {
+  background: var(--surface);
+  padding: 48px 36px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.25s;
+}
+.vertical-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--teal);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.35s ease;
+}
+.vertical-card:hover::before { transform: scaleX(1); }
+.vertical-card:hover { background: #181D21; }
+.vc-icon {
+  font-size: 36px;
+  margin-bottom: 20px;
+  display: block;
+}
+.vc-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  letter-spacing: 0.03em;
+  color: var(--white);
+  margin-bottom: 12px;
+  line-height: 1;
+}
+.vc-desc {
+  font-size: 15px;
+  color: var(--mid);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.vc-stat {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--teal);
+  padding-top: 16px;
+  border-top: 1px solid var(--border2);
+}
+
+/* ── PAYMENTS SECTION ── */
+.payments-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  margin-top: 48px;
+}
+.payment-diagram {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  padding: 40px;
+  border-left: 2px solid var(--teal);
+}
+.pd-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 24px;
+}
+.pd-flow {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.pd-node {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 14px 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.pd-node .node-name { color: var(--white); }
+.pd-node .node-rate { color: var(--teal); font-size: 11px; }
+.pd-node .node-tag {
+  font-size: 9px; padding: 3px 8px; border-radius: 2px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.pd-node .tag-you { background: rgba(0,229,200,0.15); color: var(--teal); }
+.pd-node .tag-proc { background: rgba(90,100,112,0.3); color: var(--muted); }
+.pd-arrow {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 2px 0;
+}
+
+.payments-copy h3 {
+  font-family: var(--font-display);
+  font-size: 36px;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.payments-copy p {
+  font-size: 16px;
+  color: var(--mid);
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+.payment-pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border: 1px solid var(--teal);
+  color: var(--teal);
+  margin: 4px 4px 4px 0;
+}
+
+/* ── PRICING ── */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-top: 48px;
+  background: var(--border);
+}
+.pricing-card {
+  background: var(--surface);
+  padding: 48px 36px;
+  position: relative;
+}
+.pricing-card.featured {
+  background: #0F1E1C;
+  border: 1px solid var(--teal);
+}
+.pricing-card.featured::before {
+  content: 'MOST POPULAR';
+  position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+  background: var(--teal);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  padding: 4px 14px;
+}
+.pc-tier {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.pc-price {
+  font-family: var(--font-display);
+  font-size: 64px;
+  line-height: 1;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.featured .pc-price { color: var(--teal); }
+.pc-period {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 28px;
+}
+.pc-features {
+  list-style: none;
+  margin-bottom: 36px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.pc-features li {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--mid);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.pc-features li::before {
+  content: '→';
+  color: var(--teal);
+  font-size: 11px;
+}
+.pc-btn {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 14px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--mid);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.featured .pc-btn {
+  background: var(--teal);
+  color: var(--bg);
+  border-color: var(--teal);
+}
+.pc-btn:hover { border-color: var(--teal); color: var(--teal); }
+.featured .pc-btn:hover { background: #00ffd9; }
+
+/* ── EMAIL CAPTURE ── */
+.capture-section {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.capture-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 96px 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.capture-copy h2 { margin-bottom: 16px; }
+.capture-copy p { font-size: 17px; color: var(--mid); line-height: 1.65; }
+.capture-form { display: flex; flex-direction: column; gap: 12px; }
+.form-row { display: flex; gap: 2px; }
+.form-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 16px 20px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input::placeholder { color: var(--muted); }
+.form-input:focus { border-color: var(--teal); }
+.form-btn {
+  background: var(--teal);
+  color: var(--bg);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 16px 28px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.form-btn:hover { background: #00ffd9; }
+.form-note {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.form-select {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 16px 20px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+  appearance: none;
+  cursor: pointer;
+}
+.form-select:focus { border-color: var(--teal); }
+.form-select option { background: var(--surface); }
+.success-msg {
+  display: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--teal);
+  padding: 20px;
+  border: 1px solid var(--teal);
+  background: rgba(0,229,200,0.06);
+  text-align: center;
+}
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative; z-index: 1;
+}
+.footer-logo {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+}
+.footer-logo span { color: var(--teal); }
+.footer-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.footer-links {
+  display: flex; gap: 28px; list-style: none;
+}
+.footer-links a {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--teal); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes countUp {
+  from { opacity: 0.2; }
+  to   { opacity: 1; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.blink { animation: pulse 1.4s ease infinite; }
+
+/* ── DIVIDER ── */
+.section-divider {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 48px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  .hero, section { padding-left: 24px; padding-right: 24px; }
+  .score-demo { grid-template-columns: 1fr; }
+  .steps, .verticals, .pricing-grid { grid-template-columns: 1fr; }
+  .payments-grid, .capture-inner { grid-template-columns: 1fr; gap: 40px; }
+  h2 { font-size: 42px; }
+  footer { flex-direction: column; gap: 20px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Rating<span>Value</span>.org</a>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#verticals">Verticals</a></li>
+    <li><a href="#business">For Business</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <button class="nav-cta" onclick="document.getElementById('early-access').scrollIntoView({behavior:'smooth'})">Get Early Access</button>
+</nav>
+
+<!-- HERO -->
+<div style="max-width:1280px;margin:0 auto;position:relative;z-index:1;">
+  <section class="hero" style="padding-bottom:0;">
+    <div class="hero-eyebrow">AI-Powered Rating Normalization</div>
+    <h1 class="hero-headline">
+      THE TRUTH<br/>
+      <span class="teal">BEHIND</span> THE<br/>
+      <span class="stroke">SCORE</span>
+    </h1>
+    <p class="hero-sub">
+      Published ratings are manipulated, inflated, and systematically distorted. We surface what they actually mean.
+    </p>
+
+    <!-- LIVE SCORE DEMO -->
+    <div class="score-demo">
+      <!-- LEFT: details panel -->
+      <div class="score-panel">
+        <div class="sp-label">Live Analysis Sample</div>
+        <div class="sp-venue">Harborside Grille & Bar</div>
+        <div class="sp-loc">Google Maps · 847 reviews · Analyzed 3 sec ago <span class="blink">●</span></div>
+
+        <div class="score-row">
+          <span class="sr-key">Published Rating</span>
+          <span class="sr-val published">4.7 ★</span>
+        </div>
+        <div class="score-row">
+          <span class="sr-key">Value Rating™</span>
+          <span class="sr-val adjusted" id="value-rating">—</span>
+        </div>
+        <div class="score-row">
+          <span class="sr-key">Suspicious Reviews</span>
+          <span class="sr-val warn" id="susp-count">—</span>
+        </div>
+        <div class="score-row">
+          <span class="sr-key">AI-Generated</span>
+          <span class="sr-val danger" id="ai-count">—</span>
+        </div>
+        <div class="score-row">
+          <span class="sr-key">Distortion Type</span>
+          <span class="sr-val warn" id="distort-type">—</span>
+        </div>
+        <div class="score-row">
+          <span class="sr-key">Confidence Band</span>
+          <span class="sr-val" style="color:var(--mid)" id="conf-band">—</span>
+        </div>
+      </div>
+
+      <!-- RIGHT: big score -->
+      <div class="big-score-panel">
+        <div class="bsp-label">Value Rating™</div>
+        <div class="big-score-num" id="big-num">—</div>
+        <div class="big-score-denom">out of 5.0</div>
+        <div class="credibility-bar">
+          <div class="credibility-fill" id="cred-fill"></div>
+        </div>
+        <div class="credibility-meta" id="cred-label">Credibility Score: —</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-label">Live Feed</div>
+  <div class="ticker-track" id="ticker">
+    <div class="ticker-item"><span class="t-name">Epic Universe · Villain-Con Blast</span><span class="t-pub">Posted: 75 min</span><span class="t-adj">Actual: ~42 min</span><span class="t-tag warn">1.79× INFLATION</span></div>
+    <div class="ticker-item"><span class="t-name">Rosario's Kitchen · Red Bank NJ</span><span class="t-pub">4.6 ★ Google</span><span class="t-adj">Value: 3.9 ★</span><span class="t-tag down">PAID FLOOD</span></div>
+    <div class="ticker-item"><span class="t-name">Hilton Garden Inn · Nashville</span><span class="t-pub">4.4 ★ TripAdvisor</span><span class="t-adj">Value: 4.2 ★</span><span class="t-tag up">CREDIBLE</span></div>
+    <div class="ticker-item"><span class="t-name">Six Flags Great Adventure · Kingda Ka</span><span class="t-pub">Posted: 45 min</span><span class="t-adj">Actual: ~28 min</span><span class="t-tag warn">1.61× INFLATION</span></div>
+    <div class="ticker-item"><span class="t-name">Noodle Palace · Austin TX</span><span class="t-pub">4.8 ★ Yelp</span><span class="t-adj">Value: 4.7 ★</span><span class="t-tag up">VERIFIED</span></div>
+    <div class="ticker-item"><span class="t-name">Magic Kingdom · Tron Lightcycle</span><span class="t-pub">Posted: 90 min</span><span class="t-adj">Actual: ~65 min</span><span class="t-tag warn">1.38× INFLATION</span></div>
+    <div class="ticker-item"><span class="t-name">Sunrise Dental Group · Phoenix</span><span class="t-pub">5.0 ★ Google</span><span class="t-adj">Value: 3.1 ★</span><span class="t-tag down">SUSPECTED FRAUD</span></div>
+    <!-- duplicate for seamless loop -->
+    <div class="ticker-item"><span class="t-name">Epic Universe · Villain-Con Blast</span><span class="t-pub">Posted: 75 min</span><span class="t-adj">Actual: ~42 min</span><span class="t-tag warn">1.79× INFLATION</span></div>
+    <div class="ticker-item"><span class="t-name">Rosario's Kitchen · Red Bank NJ</span><span class="t-pub">4.6 ★ Google</span><span class="t-adj">Value: 3.9 ★</span><span class="t-tag down">PAID FLOOD</span></div>
+    <div class="ticker-item"><span class="t-name">Hilton Garden Inn · Nashville</span><span class="t-pub">4.4 ★ TripAdvisor</span><span class="t-adj">Value: 4.2 ★</span><span class="t-tag up">CREDIBLE</span></div>
+    <div class="ticker-item"><span class="t-name">Six Flags Great Adventure · Kingda Ka</span><span class="t-pub">Posted: 45 min</span><span class="t-adj">Actual: ~28 min</span><span class="t-tag warn">1.61× INFLATION</span></div>
+    <div class="ticker-item"><span class="t-name">Noodle Palace · Austin TX</span><span class="t-pub">4.8 ★ Yelp</span><span class="t-adj">Value: 4.7 ★</span><span class="t-tag up">VERIFIED</span></div>
+    <div class="ticker-item"><span class="t-name">Magic Kingdom · Tron Lightcycle</span><span class="t-pub">Posted: 90 min</span><span class="t-adj">Actual: ~65 min</span><span class="t-tag warn">1.38× INFLATION</span></div>
+    <div class="ticker-item"><span class="t-name">Sunrise Dental Group · Phoenix</span><span class="t-pub">5.0 ★ Google</span><span class="t-adj">Value: 3.1 ★</span><span class="t-tag down">SUSPECTED FRAUD</span></div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section-divider"></div>
+<section id="how">
+  <div class="section-eyebrow">How It Works</div>
+  <h2>FOUR STEPS TO THE <span class="teal">REAL</span> NUMBER</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Ingest</h3>
+      <p>We pull published ratings, review text, timestamps, reviewer histories, and posted wait times across Google, Yelp, TripAdvisor, and theme park apps simultaneously.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>Detect</h3>
+      <p>37+ AI-powered detection signals analyze velocity patterns, linguistic fingerprints, reviewer network clustering, geographic anomalies, and AI-generated text markers.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Normalize</h3>
+      <p>Suspicious reviews are removed or down-weighted. Wait time inflation factors are calculated against crowdsourced observations and throughput models.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h3>Output</h3>
+      <p>A Value Rating™, Credibility Score, Confidence Band, and Distortion Type tag — the score that should have been there all along.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VERTICALS -->
+<div class="section-divider"></div>
+<section id="verticals">
+  <div class="section-eyebrow">Coverage</div>
+  <h2>EVERY PLACE <span class="stroke">PEOPLE</span> <span class="teal">TRUST</span> A SCORE</h2>
+  <div class="verticals">
+    <div class="vertical-card">
+      <span class="vc-icon">🎢</span>
+      <div class="vc-title">THEME PARKS</div>
+      <p class="vc-desc">Posted wait times are routinely inflated to sell Lightning Lane and Express Pass upgrades. We score every major park's inflation pattern and surface the actual expected wait.</p>
+      <div class="vc-stat">Avg. posted-vs-actual inflation: 1.4× — 2.1×</div>
+    </div>
+    <div class="vertical-card">
+      <span class="vc-icon">🍽️</span>
+      <div class="vc-title">RESTAURANTS</div>
+      <p class="vc-desc">Google review bombing, paid positive floods, and AI-generated testimonials distort ratings for millions of venues. We normalize across Google, Yelp, and TripAdvisor simultaneously.</p>
+      <div class="vc-stat">~30% of all restaurant reviews estimated fake (2025)</div>
+    </div>
+    <div class="vertical-card">
+      <span class="vc-icon">🏨</span>
+      <div class="vc-title">HOTELS & STAYS</div>
+      <p class="vc-desc">Booking incentives, corporate review programs, and platform suppression create a systematically distorted landscape. Our cross-platform corroboration cuts through it.</p>
+      <div class="vc-stat">Avg. Credibility Score gap: hotel rated 4.5 ★ vs. Value 4.0 ★</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOR BUSINESS / PAYMENTS -->
+<div class="section-divider"></div>
+<section id="business">
+  <div class="section-eyebrow">For Business</div>
+  <h2>CERTIFIED. <span class="teal">VERIFIED.</span><br/><span class="stroke">TRUSTED.</span></h2>
+
+  <div class="payments-grid">
+    <div>
+      <div class="payment-diagram">
+        <div class="pd-title">RatingValue Partner Revenue Model</div>
+        <div class="pd-flow">
+          <div class="pd-node">
+            <span class="node-name">Your Customer Processes Payment</span>
+            <span class="node-tag tag-proc">Merchant</span>
+          </div>
+          <div class="pd-arrow">↓ transaction flows through</div>
+          <div class="pd-node">
+            <span class="node-name">RatingValue Partner Network</span>
+            <span class="node-tag tag-you">You Earn</span>
+          </div>
+          <div class="pd-arrow">↓ wholesale rate charged</div>
+          <div class="pd-node">
+            <span class="node-name">Processor (Shift4 / Heartland)</span>
+            <span class="node-tag tag-proc">Underlying</span>
+          </div>
+          <div class="pd-arrow">↓ residual paid monthly</div>
+          <div class="pd-node">
+            <span class="node-name">Your Residual: 10–25 bps / transaction</span>
+            <span class="node-rate">Lifetime · Passive · Recurring</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="payments-copy">
+      <h3>RATINGS THAT<br/><span style="color:var(--teal)">PAY YOU BACK</span></h3>
+      <p>RatingValue Certified businesses join a partner network that processes payments through our preferred ISO relationships. Every transaction you process generates a residual — and your Credibility Score gets richer data to work with.</p>
+      <p>It's a closed loop: better data produces better scores, better scores justify the certification, and the certification brings merchants into the payment network.</p>
+      <div style="margin-top:24px;">
+        <span class="payment-pill">ISO Residuals</span>
+        <span class="payment-pill">Metered Billing</span>
+        <span class="payment-pill">Stripe Connect</span>
+        <span class="payment-pill">Enterprise ACH</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<div class="section-divider"></div>
+<section id="pricing">
+  <div class="section-eyebrow">Pricing</div>
+  <h2>START FREE. <span class="teal">SCALE</span> <span class="stroke">SMART.</span></h2>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <div class="pc-tier">Consumer · Free</div>
+      <div class="pc-price">$0</div>
+      <div class="pc-period">forever</div>
+      <ul class="pc-features">
+        <li>3 Value Rating lookups / day</li>
+        <li>Basic Credibility Score</li>
+        <li>Distortion Type tag</li>
+        <li>Web access only</li>
+      </ul>
+      <button class="pc-btn">Get Started</button>
+    </div>
+    <div class="pricing-card featured">
+      <div class="pc-tier">Consumer · Pro</div>
+      <div class="pc-price">$7<span style="font-size:28px;vertical-align:super;">.99</span></div>
+      <div class="pc-period">per month · cancel anytime</div>
+      <ul class="pc-features">
+        <li>Unlimited Value Ratings</li>
+        <li>Full signal breakdown</li>
+        <li>Distortion history &amp; trends</li>
+        <li>Wait time inflation tracker</li>
+        <li>Chrome extension access</li>
+        <li>Alert on score changes</li>
+      </ul>
+      <button class="pc-btn">Start Pro Trial</button>
+    </div>
+    <div class="pricing-card">
+      <div class="pc-tier">Business / API</div>
+      <div class="pc-price">$99<span style="font-size:28px;">+</span></div>
+      <div class="pc-period">per month · usage-based</div>
+      <ul class="pc-features">
+        <li>API access (per-call billing)</li>
+        <li>Multi-location dashboard</li>
+        <li>RatingValue Certified badge</li>
+        <li>Insurer-grade data export</li>
+        <li>ISO payment integration</li>
+        <li>Dedicated support</li>
+      </ul>
+      <button class="pc-btn">Contact Sales</button>
+    </div>
+  </div>
+</section>
+
+<!-- EMAIL CAPTURE -->
+<div class="capture-section" id="early-access">
+  <div class="capture-inner">
+    <div class="capture-copy">
+      <div class="section-eyebrow">Early Access</div>
+      <h2>GET ON THE <span class="teal">LIST</span></h2>
+      <p>We're in build phase. Be first to access Value Ratings for your vertical — whether you're a consumer who's tired of being misled, an operator who wants the Certified badge, or an insurer who needs clean scoring data.</p>
+    </div>
+    <div>
+      <div class="capture-form" id="signup-form">
+        <div class="form-row">
+          <input class="form-input" type="text" id="f-name" placeholder="Your name" autocomplete="name"/>
+        </div>
+        <div class="form-row">
+          <input class="form-input" type="email" id="f-email" placeholder="Email address" autocomplete="email"/>
+          <button class="form-btn" onclick="handleSignup()">Notify Me</button>
+        </div>
+        <select class="form-select" id="f-type">
+          <option value="" disabled selected>I am a…</option>
+          <option value="consumer">Consumer — I want better ratings</option>
+          <option value="restaurant">Restaurant / Hospitality operator</option>
+          <option value="park">Theme park / Attraction operator</option>
+          <option value="insurer">Insurance / Risk professional</option>
+          <option value="investor">Investor / Advisor</option>
+          <option value="press">Press / Research</option>
+        </select>
+        <div class="form-note">No spam. Launch notification only. Unsubscribe anytime.</div>
+      </div>
+      <div class="success-msg" id="success-msg">
+        ✓ You're on the list. We'll be in touch at launch.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Rating<span>Value</span>.org</div>
+  <div class="footer-meta">
+    © 2026 RatingValue.org · An Amusement Standards Company<br/>
+    ratingvalue.org · Built in New Jersey
+  </div>
+  <ul class="footer-links">
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">API Docs</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+</footer>
+
+<script>
+// ── ANIMATED SCORE REVEAL ──
+function animateCount(el, start, end, decimals, duration, suffix, callback) {
+  const range = end - start;
+  const startTime = performance.now();
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = (start + range * eased).toFixed(decimals);
+    el.textContent = current + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+    else if (callback) callback();
+  }
+  requestAnimationFrame(step);
+}
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const bigNum = document.getElementById('big-num');
+    animateCount(bigNum, 2.0, 3.8, 1, 1600, ' ★', () => {
+      bigNum.textContent = '3.8 ★';
+    });
+    setTimeout(() => {
+      document.getElementById('value-rating').textContent = '3.8 ★';
+      document.getElementById('susp-count').textContent = '134 flagged (15.8%)';
+      document.getElementById('ai-count').textContent = '22 reviews';
+      document.getElementById('distort-type').textContent = 'Paid Positive Flood';
+      document.getElementById('conf-band').textContent = '3.6 – 4.1 ★';
+      document.getElementById('cred-label').textContent = 'Credibility Score: 74 / 100';
+      document.getElementById('cred-fill').classList.add('animate');
+    }, 900);
+  }, 1000);
+});
+
+// ── SIGNUP HANDLER ──
+function handleSignup() {
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const type = document.getElementById('f-type').value;
+  if (!email || !email.includes('@')) {
+    document.getElementById('f-email').style.borderColor = 'var(--red)';
+    setTimeout(() => document.getElementById('f-email').style.borderColor = '', 1500);
+    return;
+  }
+  document.getElementById('signup-form').style.display = 'none';
+  document.getElementById('success-msg').style.display = 'block';
+  // TODO: wire to Airtable / Cloudflare Worker endpoint
+  console.log('Signup:', { name, email, type });
+}
+
+document.getElementById('f-email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSignup();
+});
+</script>
+</body>
+</html>
