@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Home Services Trust Index — RatingValue.org</title>
+<meta name="description" content="AI-powered contractor trust scoring. License verified, BBB cross-referenced, fake review detection. Know who to trust before they enter your home."/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0C0E10;--surface:#13171A;--border:#1F2529;--border2:#2A3035;
+  --purple:#A78BFA;--purple-dim:#6040C0;--red:#FF4757;--amber:#F5A623;--green:#22C55E;--teal:#00E5C8;
+  --white:#F0EDE8;--muted:#5A6470;--mid:#8C97A0;
+  --accent:var(--purple);
+  --fd:'Bebas Neue',sans-serif;--fb:'Instrument Serif',Georgia,serif;--fm:'IBM Plex Mono',monospace;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--white);font-family:var(--fb);font-size:17px;line-height:1.65;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.5;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 48px;border-bottom:1px solid var(--border);background:rgba(12,14,16,0.92);backdrop-filter:blur(14px);}
+.nav-logo{font-family:var(--fm);font-size:14px;font-weight:600;color:var(--white);text-decoration:none;}
+.nav-logo span{color:var(--purple);}
+.nav-back{font-family:var(--fm);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.nav-back:hover{color:var(--purple);}
+.nav-cta{font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--bg);background:var(--purple);border:none;padding:9px 20px;cursor:pointer;}
+
+.hero{padding:110px 48px 56px;max-width:1280px;margin:0 auto;position:relative;z-index:1;}
+.eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--purple);margin-bottom:20px;}
+.hero-hl{font-family:var(--fd);font-size:clamp(56px,7vw,110px);line-height:0.92;letter-spacing:0.01em;margin-bottom:16px;}
+.hero-hl .acc{color:var(--purple);}
+.hero-hl .stroke{-webkit-text-stroke:1px var(--white);color:transparent;}
+.hero-sub{font-family:var(--fb);font-style:italic;font-size:clamp(16px,1.8vw,21px);color:var(--mid);max-width:600px;margin-bottom:40px;line-height:1.55;}
+.hero-stats{display:flex;gap:2px;background:var(--border);max-width:800px;}
+.hstat{background:var(--surface);padding:20px 24px;flex:1;}
+.hstat-num{font-family:var(--fd);font-size:36px;color:var(--purple);line-height:1;margin-bottom:4px;}
+.hstat-label{font-family:var(--fm);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);line-height:1.4;}
+
+/* TICKER */
+.ticker-wrap{position:relative;width:100%;overflow:hidden;background:var(--border);padding:11px 0;z-index:1;margin-top:40px;}
+.ticker-label{position:absolute;left:0;top:0;bottom:0;background:var(--purple);color:var(--bg);font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:0 18px;display:flex;align-items:center;z-index:2;}
+.ticker-track{display:flex;animation:ticker 36s linear infinite;white-space:nowrap;padding-left:150px;}
+.ticker-item{font-family:var(--fm);font-size:11px;padding:0 28px;border-right:1px solid var(--border2);display:flex;align-items:center;gap:8px;}
+.t-name{color:var(--mid);}
+.t-pub{color:var(--muted);}
+.t-adj{color:var(--purple);font-weight:500;}
+.t-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.08em;text-transform:uppercase;}
+.t-tag.down{background:rgba(255,71,87,0.12);color:var(--red);}
+.t-tag.up{background:rgba(34,197,94,0.12);color:var(--green);}
+.t-tag.warn{background:rgba(167,139,250,0.12);color:var(--purple);}
+
+/* UNIQUE SIGNALS */
+.unique-section{max-width:1280px;margin:0 auto;padding:40px 48px 0;position:relative;z-index:1;}
+.unique-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border);margin-top:20px;}
+.ucard{background:var(--surface);padding:28px 24px;border-top:2px solid var(--purple);}
+.ucard-icon{font-size:28px;margin-bottom:12px;display:block;}
+.ucard-title{font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--purple);margin-bottom:10px;}
+.ucard-desc{font-size:14px;color:var(--mid);line-height:1.6;}
+.ucard-tag{font-family:var(--fm);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--purple);margin-top:10px;padding-top:10px;border-top:1px solid var(--border2);}
+
+/* CONTROLS */
+.controls{max-width:1280px;margin:32px auto 0;padding:0 48px;position:relative;z-index:1;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.search-box{flex:1;min-width:220px;background:var(--surface);border:1px solid var(--border2);color:var(--white);font-family:var(--fm);font-size:13px;padding:13px 18px;outline:none;transition:border-color 0.2s;}
+.search-box::placeholder{color:var(--muted);}
+.search-box:focus{border-color:var(--purple);}
+.filter-btn{font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:13px 14px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.18s;}
+.filter-btn:hover,.filter-btn.active{border-color:var(--purple);color:var(--purple);background:rgba(167,139,250,0.05);}
+.sort-sel{background:var(--surface);border:1px solid var(--border2);color:var(--white);font-family:var(--fm);font-size:12px;padding:13px 16px;outline:none;cursor:pointer;appearance:none;}
+.results-count{font-family:var(--fm);font-size:11px;color:var(--muted);}
+
+/* SERVICE GRID */
+.serv-grid{max-width:1280px;margin:0 auto;padding:24px 48px 80px;position:relative;z-index:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:2px;}
+
+/* SERVICE CARD */
+.serv-card{background:var(--surface);border:1px solid var(--border);overflow:hidden;transition:background 0.2s;}
+.serv-card:hover{background:#181D21;}
+.sc-bar{height:2px;}
+.sc-top{padding:22px 22px 14px;}
+.sc-type{font-family:var(--fm);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.sc-name{font-family:var(--fd);font-size:24px;line-height:1.05;color:var(--white);margin-bottom:4px;}
+.sc-loc{font-family:var(--fm);font-size:10px;color:var(--muted);}
+.sc-scores{padding:14px 22px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.scs-item{text-align:center;}
+.scs-val{font-family:var(--fm);font-size:14px;font-weight:600;line-height:1;}
+.scs-label{font-family:var(--fm);font-size:7px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+.sc-signals{padding:10px 22px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.sc-sig{font-family:var(--fm);font-size:8px;letter-spacing:0.06em;text-transform:uppercase;padding:2px 7px;border-radius:2px;}
+.sig-ok{background:rgba(34,197,94,0.1);color:var(--green);}
+.sig-warn{background:rgba(245,166,35,0.1);color:var(--amber);}
+.sig-bad{background:rgba(255,71,87,0.12);color:var(--red);}
+.sig-na{background:rgba(90,100,112,0.2);color:var(--muted);}
+.sc-footer{padding:10px 22px;display:flex;justify-content:space-between;align-items:center;}
+.sc-trust{font-family:var(--fm);font-size:10px;font-weight:600;}
+.sc-link{font-family:var(--fm);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+.serv-card:hover .sc-link{color:var(--purple);}
+
+/* TRUST BREAKDOWN */
+.trust-section{max-width:1280px;margin:0 auto;padding:0 48px;position:relative;z-index:1;}
+.trust-box{background:var(--surface);border:1px solid var(--border2);padding:32px;border-left:2px solid var(--purple);}
+.trust-header{font-family:var(--fm);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--purple);margin-bottom:20px;}
+
+.no-results{grid-column:1/-1;text-align:center;padding:60px;font-family:var(--fm);font-size:13px;color:var(--muted);}
+.sdiv{max-width:1280px;margin:0 auto;padding:0 48px;border-top:1px solid var(--border);}
+
+footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;}
+.f-logo{font-family:var(--fm);font-size:13px;font-weight:600;color:var(--white);}
+.f-logo span{color:var(--purple);}
+.f-meta{font-family:var(--fm);font-size:10px;color:var(--muted);text-align:center;}
+.f-links{display:flex;gap:20px;list-style:none;}
+.f-links a{font-family:var(--fm);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.f-links a:hover{color:var(--purple);}
+
+@keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.blink{animation:pulse 1.4s ease infinite;}
+@media(max-width:768px){
+  nav,.hero,.controls,.unique-section,.serv-grid,.trust-section,footer{padding-left:20px;padding-right:20px;}
+  .unique-grid,.hero-stats{grid-template-columns:1fr;}
+  .serv-grid{grid-template-columns:1fr;}
+  footer{flex-direction:column;gap:16px;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Rating<span>Value</span>.org</a>
+  <a href="index.html" class="nav-back">← All Verticals</a>
+  <button class="nav-cta">Get Early Access</button>
+</nav>
+
+<div class="hero">
+  <div class="eyebrow">Home Services Trust Index · Powered by RatingValue.org</div>
+  <h1 class="hero-hl">KNOW WHO<br/>YOU'RE <span class="acc">LETTING</span><br/><span class="stroke">IN YOUR HOME</span></h1>
+  <p class="hero-sub">Home service contractors are the #1 fake review abuse vertical on Google. We verify licenses, cross-reference BBB complaints, and normalize trust scores — before they cross your threshold.</p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-num">$300B</div><div class="hstat-label">Annual consumer harm<br/>from fake contractor reviews</div></div>
+    <div class="hstat"><div class="hstat-num">28%</div><div class="hstat-label">Avg suspicious review<br/>rate in home services</div></div>
+    <div class="hstat"><div class="hstat-num">5</div><div class="hstat-label">Trust dimensions<br/>scored per contractor</div></div>
+    <div class="hstat"><div class="hstat-num">License</div><div class="hstat-label">Verified against<br/>state databases</div></div>
+    <div class="hstat"><div class="hstat-num">BBB</div><div class="hstat-label">Complaint cross-<br/>reference included</div></div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-label">Live <span class="blink">●</span></div>
+  <div class="ticker-track">
+    <div class="ticker-item"><span class="t-name">TruBlue Home Services · Monmouth NJ</span><span class="t-pub">4.9★ Google</span><span class="t-adj">Value: 4.1★</span><span class="t-tag warn">SELF-SOLICITED</span></div>
+    <div class="ticker-item"><span class="t-name">Sunrise HVAC · Phoenix AZ</span><span class="t-pub">5.0★ Google</span><span class="t-adj">Value: 2.9★</span><span class="t-tag down">FRAUD DETECTED</span></div>
+    <div class="ticker-item"><span class="t-name">ProClean Plumbing · Denver CO</span><span class="t-pub">4.7★ Yelp</span><span class="t-adj">Value: 4.5★</span><span class="t-tag up">CREDIBLE</span></div>
+    <div class="ticker-item"><span class="t-name">A1 Electric · Chicago IL</span><span class="t-pub">4.8★ Google</span><span class="t-adj">Value: 3.7★</span><span class="t-tag down">LICENSE NOT FOUND</span></div>
+    <div class="ticker-item"><span class="t-name">Green Thumb Landscaping · NJ</span><span class="t-pub">4.6★ Google</span><span class="t-adj">Value: 4.4★</span><span class="t-tag up">VERIFIED</span></div>
+    <div class="ticker-item"><span class="t-name">FastFix Roofing · Dallas TX</span><span class="t-pub">4.9★ Google</span><span class="t-adj">Value: 3.2★</span><span class="t-tag down">BBB COMPLAINTS</span></div>
+    <!-- dupe -->
+    <div class="ticker-item"><span class="t-name">TruBlue Home Services · Monmouth NJ</span><span class="t-pub">4.9★ Google</span><span class="t-adj">Value: 4.1★</span><span class="t-tag warn">SELF-SOLICITED</span></div>
+    <div class="ticker-item"><span class="t-name">Sunrise HVAC · Phoenix AZ</span><span class="t-pub">5.0★ Google</span><span class="t-adj">Value: 2.9★</span><span class="t-tag down">FRAUD DETECTED</span></div>
+    <div class="ticker-item"><span class="t-name">ProClean Plumbing · Denver CO</span><span class="t-pub">4.7★ Yelp</span><span class="t-adj">Value: 4.5★</span><span class="t-tag up">CREDIBLE</span></div>
+    <div class="ticker-item"><span class="t-name">A1 Electric · Chicago IL</span><span class="t-pub">4.8★ Google</span><span class="t-adj">Value: 3.7★</span><span class="t-tag down">LICENSE NOT FOUND</span></div>
+    <div class="ticker-item"><span class="t-name">Green Thumb Landscaping · NJ</span><span class="t-pub">4.6★ Google</span><span class="t-adj">Value: 4.4★</span><span class="t-tag up">VERIFIED</span></div>
+    <div class="ticker-item"><span class="t-name">FastFix Roofing · Dallas TX</span><span class="t-pub">4.9★ Google</span><span class="t-adj">Value: 3.2★</span><span class="t-tag down">BBB COMPLAINTS</span></div>
+  </div>
+</div>
+
+<!-- UNIQUE SIGNALS -->
+<div class="unique-section">
+  <div style="font-family:var(--fm);font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--purple);">// What Makes Home Services Different</div>
+  <div class="unique-grid">
+    <div class="ucard">
+      <span class="ucard-icon">🪪</span>
+      <div class="ucard-title">License Verification</div>
+      <div class="ucard-desc">We cross-reference contractor claims against state licensing databases. No license found = automatic Trust Score penalty. No other review platform does this.</div>
+      <div class="ucard-tag">Unique to RatingValue</div>
+    </div>
+    <div class="ucard">
+      <span class="ucard-icon">📋</span>
+      <div class="ucard-title">BBB Complaint Cross-Reference</div>
+      <div class="ucard-desc">Better Business Bureau complaint history is weighted against review scores. A 4.9 Google rating with 12 BBB complaints in 6 months is a red flag the platforms won't show you.</div>
+      <div class="ucard-tag">Unique to RatingValue</div>
+    </div>
+    <div class="ucard">
+      <span class="ucard-icon">🔍</span>
+      <div class="ucard-title">Self-Solicited Sweep Detection</div>
+      <div class="ucard-desc">Many contractors push review requests immediately after job completion via text blast. We detect coordinated self-solicitation patterns and flag them separately from organic fraud.</div>
+      <div class="ucard-tag">Unique to RatingValue</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <input class="search-box" id="searchBox" type="text" placeholder="Search contractors, cities, trade types…" oninput="filterServ()"/>
+  <button class="filter-btn active" id="f-all" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" id="f-verified" onclick="setFilter('verified')">✓ Verified</button>
+  <button class="filter-btn" id="f-licensed" onclick="setFilter('licensed')">Licensed</button>
+  <button class="filter-btn" id="f-fraud" onclick="setFilter('fraud')">High Risk</button>
+  <button class="filter-btn" id="f-unlicensed" onclick="setFilter('unlicensed')">License Issues</button>
+  <select class="sort-sel" id="sortSel" onchange="filterServ()">
+    <option value="trust">Trust Score</option>
+    <option value="gap">Biggest Gap</option>
+    <option value="alpha">A → Z</option>
+  </select>
+  <div class="results-count" id="resultsCount"></div>
+</div>
+
+<!-- SERVICE GRID -->
+<div class="serv-grid" id="servGrid"></div>
+
+<div class="sdiv"></div>
+<footer>
+  <div class="f-logo">Rating<span>Value</span>.org</div>
+  <div class="f-meta">Home Services Trust Index · © 2026 RatingValue.org · An Amusement Standards Company</div>
+  <ul class="f-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="parks.html">Parks</a></li>
+    <li><a href="restaurants.html">Restaurants</a></li>
+    <li><a href="#">API</a></li>
+  </ul>
+</footer>
+
+<script>
+const SERVICES = [
+  {id:1,name:"TruBlue Home Services",city:"Asbury Park",state:"NJ",type:"General Home Services",pub:4.9,value:4.1,trust:52,licensed:true,bbb:'A-',complaints:2,suspicious:58,ai:8,dist:"Self-Solicited Sweep",signals:['lic-ok','bbb-ok','reviews-warn','age-ok','complaints-ok']},
+  {id:2,name:"Sunrise HVAC Solutions",city:"Phoenix",state:"AZ",type:"HVAC",pub:5.0,value:2.9,trust:22,licensed:false,bbb:'F',complaints:31,suspicious:189,ai:41,dist:"Fraud Detected",signals:['lic-bad','bbb-bad','reviews-bad','age-warn','complaints-bad']},
+  {id:3,name:"ProClean Plumbing",city:"Denver",state:"CO",type:"Plumbing",pub:4.7,value:4.5,trust:88,licensed:true,bbb:'A+',complaints:0,suspicious:14,ai:1,dist:"Verified Credible",signals:['lic-ok','bbb-ok','reviews-ok','age-ok','complaints-ok']},
+  {id:4,name:"A1 Electric Co.",city:"Chicago",state:"IL",type:"Electrical",pub:4.8,value:3.7,trust:38,licensed:false,bbb:'B',complaints:8,suspicious:102,ai:19,dist:"License Not Found",signals:['lic-bad','bbb-ok','reviews-bad','age-warn','complaints-warn']},
+  {id:5,name:"Green Thumb Landscaping",city:"Monmouth County",state:"NJ",type:"Landscaping",pub:4.6,value:4.4,trust:86,licensed:true,bbb:'A',complaints:1,suspicious:18,ai:2,dist:"Credible",signals:['lic-ok','bbb-ok','reviews-ok','age-ok','complaints-ok']},
+  {id:6,name:"FastFix Roofing",city:"Dallas",state:"TX",type:"Roofing",pub:4.9,value:3.2,trust:29,licensed:true,bbb:'D',complaints:22,suspicious:134,ai:28,dist:"BBB Complaints",signals:['lic-ok','bbb-bad','reviews-bad','age-warn','complaints-bad']},
+  {id:7,name:"Pristine Pool Services",city:"Orlando",state:"FL",type:"Pool & Spa",pub:4.5,value:4.3,trust:81,licensed:true,bbb:'A',complaints:1,suspicious:22,ai:3,dist:"Mild Inflation",signals:['lic-ok','bbb-ok','reviews-ok','age-ok','complaints-ok']},
+  {id:8,name:"MasterBuild Contractors",city:"Atlanta",state:"GA",type:"General Contractor",pub:4.7,value:3.5,trust:41,licensed:true,bbb:'C+',complaints:14,suspicious:88,ai:16,dist:"Self-Solicited",signals:['lic-ok','bbb-warn','reviews-bad','age-ok','complaints-warn']},
+  {id:9,name:"Clean Slate Painting",city:"Seattle",state:"WA",type:"Painting",pub:4.8,value:4.6,trust:91,licensed:true,bbb:'A+',complaints:0,suspicious:9,ai:0,dist:"Verified Credible",signals:['lic-ok','bbb-ok','reviews-ok','age-ok','complaints-ok']},
+  {id:10,name:"QuickDry Waterproofing",city:"Baltimore",state:"MD",type:"Waterproofing",pub:4.9,value:3.4,trust:33,licensed:false,bbb:'N/R',complaints:5,suspicious:121,ai:24,dist:"High Risk",signals:['lic-bad','bbb-na','reviews-bad','age-bad','complaints-warn']},
+];
+
+const SIG_LABELS = {
+  'lic-ok':'✓ Licensed','lic-bad':'✗ License Issue','lic-na':'License N/A',
+  'bbb-ok':'✓ BBB Good','bbb-warn':'⚠ BBB Watch','bbb-bad':'✗ BBB Poor','bbb-na':'BBB N/R',
+  'reviews-ok':'✓ Reviews Clean','reviews-warn':'⚠ Reviews Mixed','reviews-bad':'✗ Reviews Suspect',
+  'age-ok':'✓ Established','age-warn':'⚠ New Business','age-bad':'✗ Very New',
+  'complaints-ok':'✓ No Complaints','complaints-warn':'⚠ Some Complaints','complaints-bad':'✗ Many Complaints',
+};
+const SIG_CLASS = {
+  'lic-ok':'sig-ok','lic-bad':'sig-bad','lic-na':'sig-na',
+  'bbb-ok':'sig-ok','bbb-warn':'sig-warn','bbb-bad':'sig-bad','bbb-na':'sig-na',
+  'reviews-ok':'sig-ok','reviews-warn':'sig-warn','reviews-bad':'sig-bad',
+  'age-ok':'sig-ok','age-warn':'sig-warn','age-bad':'sig-bad',
+  'complaints-ok':'sig-ok','complaints-warn':'sig-warn','complaints-bad':'sig-bad',
+};
+
+let currentFilter = 'all';
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('f-'+f).classList.add('active');
+  filterServ();
+}
+
+function filterServ() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const sort = document.getElementById('sortSel').value;
+  let svcs = [...SERVICES];
+  if(currentFilter==='verified') svcs = svcs.filter(s => s.trust >= 80);
+  if(currentFilter==='licensed') svcs = svcs.filter(s => s.licensed);
+  if(currentFilter==='fraud') svcs = svcs.filter(s => s.trust < 40);
+  if(currentFilter==='unlicensed') svcs = svcs.filter(s => !s.licensed);
+  if(q) svcs = svcs.filter(s =>
+    s.name.toLowerCase().includes(q) ||
+    s.city.toLowerCase().includes(q) ||
+    s.state.toLowerCase().includes(q) ||
+    s.type.toLowerCase().includes(q)
+  );
+  if(sort==='trust') svcs.sort((a,b) => b.trust-a.trust);
+  if(sort==='gap') svcs.sort((a,b) => (b.pub-b.value)-(a.pub-a.value));
+  if(sort==='alpha') svcs.sort((a,b) => a.name.localeCompare(b.name));
+  renderServ(svcs);
+  document.getElementById('resultsCount').textContent = `${svcs.length} contractor${svcs.length!==1?'s':''} shown`;
+}
+
+function getTrustColor(t) {
+  if(t >= 80) return '#22C55E';
+  if(t >= 55) return '#F5A623';
+  return '#FF4757';
+}
+
+function renderServ(svcs) {
+  const grid = document.getElementById('servGrid');
+  grid.innerHTML = '';
+  if(!svcs.length) { grid.innerHTML='<div class="no-results">No contractors match your search.</div>'; return; }
+  svcs.forEach(s => {
+    const tc = getTrustColor(s.trust);
+    const gap = (s.pub-s.value).toFixed(1);
+    const card = document.createElement('div');
+    card.className = 'serv-card';
+    const sigHtml = s.signals.map(sig =>
+      `<span class="sc-sig ${SIG_CLASS[sig]}">${SIG_LABELS[sig]}</span>`
+    ).join('');
+    card.innerHTML = `
+      <div class="sc-bar" style="background:${tc};"></div>
+      <div class="sc-top">
+        <div class="sc-type">${s.type}</div>
+        <div class="sc-name">${s.name}</div>
+        <div class="sc-loc">${s.city}, ${s.state}</div>
+      </div>
+      <div class="sc-scores">
+        <div class="scs-item"><div class="scs-val" style="color:var(--mid)">${s.pub}★</div><div class="scs-label">Published</div></div>
+        <div class="scs-item"><div class="scs-val" style="color:var(--purple)">${s.value}★</div><div class="scs-label">Value Rating</div></div>
+        <div class="scs-item"><div class="scs-val" style="color:${tc}">${s.trust}</div><div class="scs-label">Trust Score</div></div>
+        <div class="scs-item"><div class="scs-val" style="color:var(--red)">-${gap}★</div><div class="scs-label">Gap</div></div>
+        <div class="scs-item"><div class="scs-val" style="color:${s.licensed?'#22C55E':'#FF4757'}">${s.licensed?'✓':'✗'}</div><div class="scs-label">Licensed</div></div>
+      </div>
+      <div class="sc-signals">${sigHtml}</div>
+      <div class="sc-footer">
+        <span class="sc-trust" style="color:${tc}">Trust Score: ${s.trust}/100</span>
+        <span class="sc-link">Full Report →</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+
+const RV_WORKER = "https://rv-signup.ratingvalue.workers.dev";
+
+async function submitSignup({ name, email, type, vertical, source, formId, successId, btnSelector }) {
+  if (!email || !email.includes("@")) {
+    const input = document.querySelector('#' + formId + ' input[type="email"]');
+    if (input) {
+      input.style.borderColor = "var(--red)";
+      setTimeout(() => input.style.borderColor = "", 1800);
+    }
+    return;
+  }
+  const btn = btnSelector ? document.querySelector(btnSelector) : null;
+  const origTxt = btn ? btn.textContent : "";
+  if (btn) { btn.textContent = "Sending…"; btn.disabled = true; btn.style.opacity = "0.6"; }
+  try {
+    const res = await fetch(RV_WORKER, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, type, vertical, source }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Unknown error");
+    const formEl = document.getElementById(formId);
+    const succEl = document.getElementById(successId);
+    if (formEl) formEl.style.display = "none";
+    if (succEl) { succEl.style.display = "block"; succEl.textContent = "\u2713 You\u2019re on the list. We\u2019ll be in touch at launch."; }
+  } catch(e) {
+    console.error("Signup error:", e);
+    if (btn) {
+      btn.textContent = "Try Again";
+      btn.disabled = false;
+      btn.style.opacity = "1";
+      btn.style.background = "var(--red)";
+      btn.style.color = "#fff";
+      setTimeout(() => { btn.textContent = origTxt; btn.style.background = ""; btn.style.color = ""; }, 3000);
+    }
+  }
+}
+
+function handleSignup() {
+  submitSignup({
+    name:      (document.getElementById('f-name') || {}).value || '',
+    email:     (document.getElementById('f-email') || {}).value.trim().toLowerCase(),
+    type:      (document.getElementById('f-type') || {}).value || 'unknown',
+    vertical:  'services',
+    source:    'services',
+    formId:    'signup-form',
+    successId: 'success-msg',
+    btnSelector: '#signup-form .f-btn',
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => filterServ());
+</script>
+</body>
+</html>
