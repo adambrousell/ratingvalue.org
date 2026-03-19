@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Restaurant Rating Index — RatingValue.org</title>
+<meta name="description" content="AI-normalized restaurant ratings. See the real score behind Google, Yelp, and TripAdvisor — corrected for fake reviews, paid floods, and AI-generated content."/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0C0E10;--surface:#13171A;--border:#1F2529;--border2:#2A3035;
+  --amber:#F5A623;--amber-dim:#B07010;--red:#FF4757;--teal:#00E5C8;--green:#22C55E;
+  --white:#F0EDE8;--muted:#5A6470;--mid:#8C97A0;
+  --accent:var(--amber);
+  --fd:'Bebas Neue',sans-serif;--fb:'Instrument Serif',Georgia,serif;--fm:'IBM Plex Mono',monospace;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--white);font-family:var(--fb);font-size:17px;line-height:1.65;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.5;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 48px;border-bottom:1px solid var(--border);background:rgba(12,14,16,0.92);backdrop-filter:blur(14px);}
+.nav-logo{font-family:var(--fm);font-size:14px;font-weight:600;color:var(--white);text-decoration:none;}
+.nav-logo span{color:var(--amber);}
+.nav-back{font-family:var(--fm);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.nav-back:hover{color:var(--amber);}
+.nav-cta{font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--bg);background:var(--amber);border:none;padding:9px 20px;cursor:pointer;}
+
+.hero{padding:110px 48px 56px;max-width:1280px;margin:0 auto;position:relative;z-index:1;}
+.eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--amber);margin-bottom:20px;}
+.hero-hl{font-family:var(--fd);font-size:clamp(56px,7vw,110px);line-height:0.92;letter-spacing:0.01em;margin-bottom:16px;}
+.hero-hl .acc{color:var(--amber);}
+.hero-hl .stroke{-webkit-text-stroke:1px var(--white);color:transparent;}
+.hero-sub{font-family:var(--fb);font-style:italic;font-size:clamp(16px,1.8vw,21px);color:var(--mid);max-width:600px;margin-bottom:40px;line-height:1.55;}
+.hero-stats{display:flex;gap:2px;background:var(--border);max-width:700px;}
+.hstat{background:var(--surface);padding:20px 28px;flex:1;}
+.hstat-num{font-family:var(--fd);font-size:40px;color:var(--amber);line-height:1;margin-bottom:4px;}
+.hstat-label{font-family:var(--fm);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);line-height:1.4;}
+
+/* TICKER */
+.ticker-wrap{position:relative;width:100%;overflow:hidden;background:var(--border);padding:11px 0;z-index:1;margin-top:40px;}
+.ticker-label{position:absolute;left:0;top:0;bottom:0;background:var(--amber);color:var(--bg);font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;padding:0 18px;display:flex;align-items:center;z-index:2;}
+.ticker-track{display:flex;animation:ticker 36s linear infinite;white-space:nowrap;padding-left:150px;}
+.ticker-item{font-family:var(--fm);font-size:11px;padding:0 28px;border-right:1px solid var(--border2);display:flex;align-items:center;gap:8px;}
+.t-name{color:var(--mid);}
+.t-pub{color:var(--muted);}
+.t-adj{color:var(--amber);font-weight:500;}
+.t-tag{font-size:9px;padding:2px 6px;border-radius:2px;letter-spacing:0.08em;text-transform:uppercase;}
+.t-tag.down{background:rgba(255,71,87,0.12);color:var(--red);}
+.t-tag.up{background:rgba(34,197,94,0.12);color:var(--green);}
+.t-tag.warn{background:rgba(245,166,35,0.1);color:var(--amber);}
+
+/* CONTROLS */
+.controls{max-width:1280px;margin:0 auto;padding:32px 48px 0;position:relative;z-index:1;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.search-box{flex:1;min-width:240px;background:var(--surface);border:1px solid var(--border2);color:var(--white);font-family:var(--fm);font-size:13px;padding:13px 18px;outline:none;transition:border-color 0.2s;}
+.search-box::placeholder{color:var(--muted);}
+.search-box:focus{border-color:var(--amber);}
+.filter-btn{font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:13px 16px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.18s;}
+.filter-btn:hover,.filter-btn.active{border-color:var(--amber);color:var(--amber);background:rgba(245,166,35,0.05);}
+.sort-sel{background:var(--surface);border:1px solid var(--border2);color:var(--white);font-family:var(--fm);font-size:12px;padding:13px 16px;outline:none;cursor:pointer;appearance:none;}
+.results-count{font-family:var(--fm);font-size:11px;color:var(--muted);}
+
+/* HOW SIGNALS WORK */
+.signals-section{max-width:1280px;margin:0 auto;padding:40px 48px 0;position:relative;z-index:1;}
+.signals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--border);margin-top:20px;}
+.sig-card{background:var(--surface);padding:24px 22px;}
+.sig-num{font-family:var(--fd);font-size:48px;color:var(--border2);line-height:1;margin-bottom:10px;}
+.sig-title{font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--amber);margin-bottom:8px;}
+.sig-desc{font-size:14px;color:var(--mid);line-height:1.55;}
+
+/* RESTAURANT GRID */
+.rest-grid{max-width:1280px;margin:0 auto;padding:24px 48px 80px;position:relative;z-index:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:2px;}
+
+/* RESTAURANT CARD */
+.rest-card{background:var(--surface);border:1px solid var(--border);overflow:hidden;transition:background 0.2s;}
+.rest-card:hover{background:#181D21;}
+.rc-bar{height:2px;}
+.rc-top{padding:22px 22px 14px;}
+.rc-cuisine{font-family:var(--fm);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.rc-name{font-family:var(--fd);font-size:26px;line-height:1.05;color:var(--white);margin-bottom:4px;}
+.rc-loc{font-family:var(--fm);font-size:10px;color:var(--muted);}
+.rc-scores{padding:14px 22px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.rcs-item{text-align:center;}
+.rcs-val{font-family:var(--fm);font-size:15px;font-weight:600;line-height:1;}
+.rcs-label{font-family:var(--fm);font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+.rc-footer{padding:10px 22px;display:flex;justify-content:space-between;align-items:center;}
+.rc-dist-tag{font-family:var(--fm);font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:2px;}
+.dist-paid{background:rgba(255,71,87,0.15);color:var(--red);}
+.dist-ai{background:rgba(245,166,35,0.15);color:var(--amber);}
+.dist-sel{background:rgba(90,100,112,0.2);color:var(--muted);}
+.dist-ok{background:rgba(34,197,94,0.12);color:var(--green);}
+.rc-cred{font-family:var(--fm);font-size:10px;color:var(--muted);}
+
+/* TREND CHART */
+.trend-section{max-width:1280px;margin:0 auto;padding:0 48px;position:relative;z-index:1;}
+.trend-box{background:var(--surface);border:1px solid var(--border2);padding:32px;margin-bottom:24px;border-left:2px solid var(--amber);}
+.trend-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.trend-title{font-family:var(--fm);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--amber);}
+.trend-legend{display:flex;gap:20px;}
+.tl-item{display:flex;align-items:center;gap:7px;font-family:var(--fm);font-size:10px;color:var(--muted);}
+.tl-dot{width:8px;height:8px;border-radius:50%;}
+
+.no-results{grid-column:1/-1;text-align:center;padding:60px;font-family:var(--fm);font-size:13px;color:var(--muted);}
+.sdiv{max-width:1280px;margin:0 auto;padding:0 48px;border-top:1px solid var(--border);}
+
+footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;}
+.f-logo{font-family:var(--fm);font-size:13px;font-weight:600;color:var(--white);}
+.f-logo span{color:var(--amber);}
+.f-meta{font-family:var(--fm);font-size:10px;color:var(--muted);text-align:center;}
+.f-links{display:flex;gap:20px;list-style:none;}
+.f-links a{font-family:var(--fm);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.f-links a:hover{color:var(--amber);}
+
+@keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.blink{animation:pulse 1.4s ease infinite;}
+@media(max-width:768px){
+  nav,.hero,.controls,.signals-section,.rest-grid,.trend-section,footer{padding-left:20px;padding-right:20px;}
+  .signals-grid{grid-template-columns:1fr 1fr;}
+  .rest-grid{grid-template-columns:1fr;}
+  footer{flex-direction:column;gap:16px;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">Rating<span>Value</span>.org</a>
+  <a href="index.html" class="nav-back">← All Verticals</a>
+  <button class="nav-cta">Get Early Access</button>
+</nav>
+
+<div class="hero">
+  <div class="eyebrow">Restaurant Rating Index · Powered by RatingValue.org</div>
+  <h1 class="hero-hl">THE SCORE<br/><span class="acc">THEY DON'T</span><br/><span class="stroke">WANT YOU TO SEE</span></h1>
+  <p class="hero-sub">Google, Yelp, and TripAdvisor ratings are systematically inflated by paid review floods, AI-generated content, and coordinated manipulation. We publish the adjusted Value Rating — what the score would be if it reflected real experiences.</p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-num">30%</div><div class="hstat-label">Avg fake review rate<br/>across platforms</div></div>
+    <div class="hstat"><div class="hstat-num">$787B</div><div class="hstat-label">Consumer harm from<br/>fake reviews (2025)</div></div>
+    <div class="hstat"><div class="hstat-num">37+</div><div class="hstat-label">Detection signals<br/>per analysis</div></div>
+    <div class="hstat"><div class="hstat-num">3</div><div class="hstat-label">Platforms cross-<br/>referenced per venue</div></div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-label">Live <span class="blink">●</span></div>
+  <div class="ticker-track">
+    <div class="ticker-item"><span class="t-name">Harborside Grille · NJ</span><span class="t-pub">4.7★ Google</span><span class="t-adj">Value: 3.8★</span><span class="t-tag down">PAID FLOOD</span></div>
+    <div class="ticker-item"><span class="t-name">Carmine's Italian · NYC</span><span class="t-pub">4.4★ Google</span><span class="t-adj">Value: 4.1★</span><span class="t-tag warn">MILD INFLATION</span></div>
+    <div class="ticker-item"><span class="t-name">Noodle Palace · Austin TX</span><span class="t-pub">4.8★ Yelp</span><span class="t-adj">Value: 4.7★</span><span class="t-tag up">VERIFIED</span></div>
+    <div class="ticker-item"><span class="t-name">Sunrise Café · Phoenix AZ</span><span class="t-pub">5.0★ Google</span><span class="t-adj">Value: 3.1★</span><span class="t-tag down">SUSPECTED FRAUD</span></div>
+    <div class="ticker-item"><span class="t-name">The Old Mill · Asheville NC</span><span class="t-pub">4.6★ TripAdvisor</span><span class="t-adj">Value: 4.4★</span><span class="t-tag up">CREDIBLE</span></div>
+    <div class="ticker-item"><span class="t-name">Rosario's Kitchen · Red Bank</span><span class="t-pub">4.6★ Google</span><span class="t-adj">Value: 3.9★</span><span class="t-tag down">PAID FLOOD</span></div>
+    <div class="ticker-item"><span class="t-name">Blue Wave Sushi · Miami FL</span><span class="t-pub">4.5★ Yelp</span><span class="t-adj">Value: 4.3★</span><span class="t-tag warn">AI DETECTED</span></div>
+    <!-- dupe -->
+    <div class="ticker-item"><span class="t-name">Harborside Grille · NJ</span><span class="t-pub">4.7★ Google</span><span class="t-adj">Value: 3.8★</span><span class="t-tag down">PAID FLOOD</span></div>
+    <div class="ticker-item"><span class="t-name">Carmine's Italian · NYC</span><span class="t-pub">4.4★ Google</span><span class="t-adj">Value: 4.1★</span><span class="t-tag warn">MILD INFLATION</span></div>
+    <div class="ticker-item"><span class="t-name">Noodle Palace · Austin TX</span><span class="t-pub">4.8★ Yelp</span><span class="t-adj">Value: 4.7★</span><span class="t-tag up">VERIFIED</span></div>
+    <div class="ticker-item"><span class="t-name">Sunrise Café · Phoenix AZ</span><span class="t-pub">5.0★ Google</span><span class="t-adj">Value: 3.1★</span><span class="t-tag down">SUSPECTED FRAUD</span></div>
+    <div class="ticker-item"><span class="t-name">The Old Mill · Asheville NC</span><span class="t-pub">4.6★ TripAdvisor</span><span class="t-adj">Value: 4.4★</span><span class="t-tag up">CREDIBLE</span></div>
+    <div class="ticker-item"><span class="t-name">Rosario's Kitchen · Red Bank</span><span class="t-pub">4.6★ Google</span><span class="t-adj">Value: 3.9★</span><span class="t-tag down">PAID FLOOD</span></div>
+    <div class="ticker-item"><span class="t-name">Blue Wave Sushi · Miami FL</span><span class="t-pub">4.5★ Yelp</span><span class="t-adj">Value: 4.3★</span><span class="t-tag warn">AI DETECTED</span></div>
+  </div>
+</div>
+
+<!-- TREND CHART -->
+<div class="trend-section" style="padding-top:40px;">
+  <div class="trend-box">
+    <div class="trend-header">
+      <div>
+        <div class="trend-title">Platform Rating vs. Value Rating™ — 12 Month Industry Average</div>
+        <div style="font-family:var(--fm);font-size:10px;color:var(--muted);margin-top:4px;">RESTAURANTS · GOOGLE + YELP + TRIPADVISOR COMPOSITE</div>
+      </div>
+      <div class="trend-legend">
+        <div class="tl-item"><div class="tl-dot" style="background:#5A6470;"></div>Published Avg</div>
+        <div class="tl-item"><div class="tl-dot" style="background:#F5A623;"></div>Value Rating™</div>
+      </div>
+    </div>
+    <canvas id="trendChart" height="80"></canvas>
+  </div>
+</div>
+
+<!-- SIGNALS -->
+<div class="signals-section">
+  <div style="font-family:var(--fm);font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--amber);">// Detection Signals</div>
+  <div class="signals-grid">
+    <div class="sig-card"><div class="sig-num">01</div><div class="sig-title">Velocity Spike</div><div class="sig-desc">Sudden bursts of reviews in short time windows — the #1 indicator of a paid review campaign.</div></div>
+    <div class="sig-card"><div class="sig-num">02</div><div class="sig-title">AI Fingerprint</div><div class="sig-desc">LLM-generated text markers. AI reviews grew 80% month-over-month since June 2023.</div></div>
+    <div class="sig-card"><div class="sig-num">03</div><div class="sig-title">Network Cluster</div><div class="sig-desc">Reviewers who share review rings across multiple businesses — a paid ring signature.</div></div>
+    <div class="sig-card"><div class="sig-num">04</div><div class="sig-title">Cross-Platform Delta</div><div class="sig-desc">Google 4.8 / Yelp 3.9 / TripAdvisor 4.1 — divergence is the tell. We corroborate all three.</div></div>
+  </div>
+</div>
+
+<!-- SEARCH + FILTER -->
+<div class="controls" style="margin-top:32px;">
+  <input class="search-box" id="searchBox" type="text" placeholder="Search restaurants, cities, cuisines…" oninput="filterRest()"/>
+  <button class="filter-btn active" id="f-all" onclick="setFilter('all')">All</button>
+  <button class="filter-btn" id="f-fraud" onclick="setFilter('fraud')">High Fraud</button>
+  <button class="filter-btn" id="f-ai" onclick="setFilter('ai')">AI Detected</button>
+  <button class="filter-btn" id="f-clean" onclick="setFilter('clean')">Verified Clean</button>
+  <select class="sort-sel" id="sortSel" onchange="filterRest()">
+    <option value="gap">Biggest Gap</option>
+    <option value="alpha">A → Z</option>
+    <option value="cred">Credibility Score</option>
+  </select>
+  <div class="results-count" id="resultsCount"></div>
+</div>
+
+<!-- RESTAURANT GRID -->
+<div class="rest-grid" id="restGrid"></div>
+
+<!-- FOOTER -->
+<div class="sdiv"></div>
+<footer>
+  <div class="f-logo">Rating<span>Value</span>.org</div>
+  <div class="f-meta">Restaurant Rating Index · © 2026 RatingValue.org · An Amusement Standards Company</div>
+  <ul class="f-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="parks.html">Parks</a></li>
+    <li><a href="services.html">Home Services</a></li>
+    <li><a href="#">API</a></li>
+  </ul>
+</footer>
+
+<script>
+// Sample restaurant data
+const RESTAURANTS = [
+  {id:1,name:"Harborside Grille & Bar",city:"Red Bank",state:"NJ",cuisine:"American Seafood",pub:4.7,value:3.8,cred:74,suspicious:134,ai:22,dist:"Paid Positive Flood",distClass:"dist-paid"},
+  {id:2,name:"Carmine's Italian Kitchen",city:"New York",state:"NY",cuisine:"Italian",pub:4.4,value:4.1,cred:86,suspicious:41,ai:6,dist:"Mild Inflation",distClass:"dist-sel"},
+  {id:3,name:"Noodle Palace",city:"Austin",state:"TX",cuisine:"Pan-Asian",pub:4.8,value:4.7,cred:94,suspicious:12,ai:1,dist:"Verified Organic",distClass:"dist-ok"},
+  {id:4,name:"Sunrise Café",city:"Phoenix",state:"AZ",cuisine:"Breakfast / Brunch",pub:5.0,value:3.1,cred:28,suspicious:189,ai:44,dist:"Suspected Fraud",distClass:"dist-paid"},
+  {id:5,name:"The Old Mill Restaurant",city:"Asheville",state:"NC",cuisine:"Southern American",pub:4.6,value:4.4,cred:91,suspicious:18,ai:2,dist:"Credible",distClass:"dist-ok"},
+  {id:6,name:"Rosario's Kitchen",city:"Red Bank",state:"NJ",cuisine:"Italian-American",pub:4.6,value:3.9,cred:71,suspicious:98,ai:12,dist:"Paid Positive Flood",distClass:"dist-paid"},
+  {id:7,name:"Blue Wave Sushi",city:"Miami",state:"FL",cuisine:"Japanese",pub:4.5,value:4.3,cred:80,suspicious:33,ai:9,dist:"AI Detected",distClass:"dist-ai"},
+  {id:8,name:"The Farmstead Bistro",city:"Nashville",state:"TN",cuisine:"Farm-to-Table",pub:4.7,value:4.5,cred:88,suspicious:22,ai:3,dist:"Mild Inflation",distClass:"dist-sel"},
+  {id:9,name:"Lighthouse Seafood Co.",city:"Boston",state:"MA",cuisine:"Seafood",pub:4.3,value:4.2,cred:93,suspicious:9,ai:0,dist:"Credible",distClass:"dist-ok"},
+  {id:10,name:"Casa Del Sol",city:"San Antonio",state:"TX",cuisine:"Mexican",pub:4.9,value:3.6,cred:41,suspicious:155,ai:31,dist:"Suspected Fraud",distClass:"dist-paid"},
+  {id:11,name:"The Garden Table",city:"Indianapolis",state:"IN",cuisine:"Health / Vegetarian",pub:4.6,value:4.4,cred:89,suspicious:14,ai:2,dist:"Credible",distClass:"dist-ok"},
+  {id:12,name:"Prime 29 Steakhouse",city:"Detroit",state:"MI",cuisine:"Steakhouse",pub:4.5,value:4.0,cred:76,suspicious:67,ai:8,dist:"Self-Solicited Reviews",distClass:"dist-ai"},
+];
+
+let currentFilter = 'all';
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('f-'+f).classList.add('active');
+  filterRest();
+}
+
+function filterRest() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const sort = document.getElementById('sortSel').value;
+  let rests = [...RESTAURANTS];
+  if(currentFilter==='fraud') rests = rests.filter(r => r.cred < 60);
+  if(currentFilter==='ai') rests = rests.filter(r => r.ai > 5);
+  if(currentFilter==='clean') rests = rests.filter(r => r.cred >= 85);
+  if(q) rests = rests.filter(r =>
+    r.name.toLowerCase().includes(q) ||
+    r.city.toLowerCase().includes(q) ||
+    r.state.toLowerCase().includes(q) ||
+    r.cuisine.toLowerCase().includes(q)
+  );
+  if(sort==='gap') rests.sort((a,b) => (b.pub-b.value)-(a.pub-a.value));
+  if(sort==='alpha') rests.sort((a,b) => a.name.localeCompare(b.name));
+  if(sort==='cred') rests.sort((a,b) => b.cred-a.cred);
+  renderRest(rests);
+  document.getElementById('resultsCount').textContent = `${rests.length} venue${rests.length!==1?'s':''} shown`;
+}
+
+function renderRest(rests) {
+  const grid = document.getElementById('restGrid');
+  grid.innerHTML = '';
+  if(!rests.length) { grid.innerHTML='<div class="no-results">No restaurants match your search.</div>'; return; }
+  rests.forEach(r => {
+    const gap = (r.pub - r.value).toFixed(1);
+    const credColor = r.cred >= 80 ? '#22C55E' : r.cred >= 60 ? '#F5A623' : '#FF4757';
+    const barColor = r.cred >= 80 ? '#22C55E' : r.cred >= 60 ? '#F5A623' : '#FF4757';
+    const card = document.createElement('div');
+    card.className = 'rest-card';
+    card.innerHTML = `
+      <div class="rc-bar" style="background:${barColor};"></div>
+      <div class="rc-top">
+        <div class="rc-cuisine">${r.cuisine}</div>
+        <div class="rc-name">${r.name}</div>
+        <div class="rc-loc">${r.city}, ${r.state}</div>
+      </div>
+      <div class="rc-scores">
+        <div class="rcs-item"><div class="rcs-val" style="color:var(--mid)">${r.pub}★</div><div class="rcs-label">Published</div></div>
+        <div class="rcs-item"><div class="rcs-val" style="color:var(--amber)">${r.value}★</div><div class="rcs-label">Value Rating</div></div>
+        <div class="rcs-item"><div class="rcs-val" style="color:${credColor}">${r.cred}</div><div class="rcs-label">Cred Score</div></div>
+        <div class="rcs-item"><div class="rcs-val" style="color:var(--red)">-${gap}★</div><div class="rcs-label">Gap</div></div>
+      </div>
+      <div class="rc-footer">
+        <span class="rc-dist-tag ${r.distClass}">${r.dist}</span>
+        <span class="rc-cred">${r.suspicious} flagged · ${r.ai} AI</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// TREND CHART
+window.addEventListener('load', () => {
+  filterRest();
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'],
+      datasets:[
+        {label:'Published',data:[4.48,4.50,4.52,4.55,4.56,4.57,4.55,4.53,4.52,4.51,4.52,4.53],borderColor:'#5A6470',borderWidth:1.5,pointRadius:2,tension:0.4,fill:false},
+        {label:'Value Rating™',data:[4.10,4.05,3.98,3.90,3.85,3.82,3.79,3.75,3.80,3.84,3.86,3.88],borderColor:'#F5A623',backgroundColor:'rgba(245,166,35,0.07)',borderWidth:2.5,pointRadius:3,tension:0.4,fill:true}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#13171A',borderColor:'#2A3035',borderWidth:1,titleColor:'#F5A623',bodyColor:'#8C97A0',titleFont:{family:'IBM Plex Mono',size:10},bodyFont:{family:'IBM Plex Mono',size:10}}},
+      scales:{
+        x:{grid:{color:'#1F2529',drawBorder:false},ticks:{color:'#5A6470',font:{family:'IBM Plex Mono',size:10}}},
+        y:{min:3.4,max:4.8,grid:{color:'#1F2529',drawBorder:false},ticks:{color:'#5A6470',font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(1)+'★'}}
+      },
+      animation:{duration:1400,easing:'easeOutQuart'}
+    }
+  });
+});
+</script>
+</body>
+</html>
