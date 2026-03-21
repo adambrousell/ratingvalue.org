@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- SEO: these get swapped per park via the PARK_CONFIG below -->
+<title id="pageTitle">Park Wait Time Inflation — RatingValue.org</title>
+<meta name="description" id="pageDesc" content="Are posted wait times accurate? See live inflation data and community reports.">
+<meta property="og:title" id="ogTitle" content="Did the park lie about wait times?">
+<meta property="og:description" id="ogDesc" content="Posted vs actual wait times. Community reported. Inflation factor calculated.">
+<meta property="og:url" id="ogUrl" content="https://ratingvalue.org/parks/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" id="canonical" href="https://ratingvalue.org/parks/">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --black:  #080808;
+  --dark:   #101010;
+  --card:   #161616;
+  --border: #242424;
+  --muted:  #444444;
+  --dim:    #777777;
+  --text:   #e2e2e2;
+  --white:  #ffffff;
+  --red:    #ff3b30;
+  --green:  #22d87c;
+  --amber:  #f5a623;
+  --chain-disney:    #0066cc;
+  --chain-universal: #1a1a1a;
+  --chain-sixflags:  #cc0000;
+  --chain-cedarfair: #cc6600;
+  --chain-other:     #444444;
+  --font-d: 'Bebas Neue', sans-serif;
+  --font-m: 'DM Mono', monospace;
+  --font-b: 'DM Sans', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--black);
+  color: var(--text);
+  font-family: var(--font-b);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(8,8,8,0.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 24px; height: 52px;
+}
+.nav-logo { font-family: var(--font-d); font-size: 22px; color: var(--white); text-decoration: none; letter-spacing: 0.04em; }
+.nav-logo span { color: var(--red); }
+.nav-links { display: flex; gap: 20px; }
+.nav-links a { font-family: var(--font-m); font-size: 11px; color: var(--dim); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.15s; }
+.nav-links a:hover, .nav-links a.active { color: var(--text); }
+
+/* HERO */
+.hero {
+  position: relative;
+  border-bottom: 1px solid var(--border);
+  padding: 52px 24px 40px;
+  max-width: 900px; margin: 0 auto;
+}
+.hero-chain {
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 10px;
+}
+.hero h1 {
+  font-family: var(--font-d);
+  font-size: clamp(42px, 7vw, 72px);
+  line-height: 0.95; letter-spacing: 0.02em;
+  color: var(--white); margin-bottom: 6px;
+}
+.hero h1 em { font-style: normal; color: var(--red); }
+.hero-sub {
+  font-family: var(--font-m); font-size: 12px;
+  color: var(--dim); letter-spacing: 0.06em;
+  margin-bottom: 28px;
+}
+
+/* STAT ROW */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+.stat-cell {
+  background: var(--card);
+  padding: 18px 20px;
+  text-align: center;
+}
+.stat-val {
+  font-family: var(--font-d);
+  font-size: 36px; letter-spacing: 0.02em;
+  color: var(--white); display: block; line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-val.red   { color: var(--red); }
+.stat-val.green { color: var(--green); }
+.stat-val.amber { color: var(--amber); }
+.stat-val.dim   { color: var(--dim); }
+.stat-lbl {
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* LAYOUT */
+.page-body {
+  max-width: 900px; margin: 0 auto;
+  padding: 0 24px 64px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+  padding-top: 32px;
+}
+
+/* SECTION HEADERS */
+.section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-family: var(--font-m); font-size: 11px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--dim);
+}
+.section-tag {
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.08em; color: var(--muted);
+}
+
+/* RIDE TABLE */
+.ride-table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+.ride-table th {
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); padding: 8px 12px;
+  text-align: left; border-bottom: 1px solid var(--border);
+}
+.ride-table th:not(:first-child) { text-align: right; }
+.ride-table td {
+  padding: 12px 12px; border-bottom: 1px solid var(--border);
+  font-size: 14px; vertical-align: middle;
+}
+.ride-table td:not(:first-child) { text-align: right; }
+.ride-table tr:last-child td { border-bottom: none; }
+.ride-table tr:hover td { background: var(--card); }
+
+.ride-name { font-weight: 500; color: var(--text); }
+.ride-land { font-family: var(--font-m); font-size: 10px; color: var(--muted); letter-spacing: 0.06em; }
+
+.wait-posted { font-family: var(--font-m); font-size: 13px; color: var(--amber); }
+.wait-actual { font-family: var(--font-m); font-size: 13px; }
+.wait-actual.inflated { color: var(--red); }
+.wait-actual.honest   { color: var(--green); }
+.wait-actual.none     { color: var(--muted); font-style: italic; }
+
+.factor-pill {
+  display: inline-block;
+  font-family: var(--font-m); font-size: 11px;
+  padding: 3px 8px; border-radius: 2px;
+  letter-spacing: 0.06em;
+}
+.factor-pill.high   { background: rgba(255,59,48,0.15);  color: var(--red);   }
+.factor-pill.mid    { background: rgba(245,166,35,0.15); color: var(--amber); }
+.factor-pill.low    { background: rgba(34,216,124,0.12); color: var(--green); }
+.factor-pill.none   { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+.status-dot {
+  display: inline-block; width: 7px; height: 7px;
+  border-radius: 50%; margin-right: 6px;
+}
+.status-dot.open   { background: var(--green); }
+.status-dot.closed { background: var(--muted); }
+
+/* REPORT CTA INLINE */
+.report-cta-inline {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px 20px;
+  margin-bottom: 28px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.report-cta-text { flex: 1; }
+.report-cta-label {
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 4px;
+}
+.report-cta-headline {
+  font-family: var(--font-d); font-size: 22px;
+  color: var(--white); letter-spacing: 0.02em;
+}
+.report-cta-sub { font-size: 13px; color: var(--dim); margin-top: 4px; }
+.report-cta-btn {
+  background: var(--red); color: var(--white);
+  font-family: var(--font-d); font-size: 18px;
+  letter-spacing: 0.06em; padding: 12px 20px;
+  border-radius: 3px; text-decoration: none;
+  white-space: nowrap; transition: background 0.15s;
+  flex-shrink: 0;
+}
+.report-cta-btn:hover { background: #e02d22; }
+
+/* COMMUNITY STATS */
+.community-block {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+.community-empty {
+  text-align: center; padding: 20px 0;
+  font-family: var(--font-m); font-size: 12px;
+  color: var(--muted); letter-spacing: 0.06em; line-height: 1.8;
+}
+.community-stat-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 3px;
+  overflow: hidden; margin-top: 14px;
+}
+.community-stat-cell {
+  background: var(--dark); padding: 14px 16px; text-align: center;
+}
+.community-stat-val {
+  font-family: var(--font-d); font-size: 28px;
+  color: var(--white); display: block; line-height: 1; margin-bottom: 4px;
+}
+.community-stat-lbl {
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+}
+
+/* SIDEBAR */
+.sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+.sidebar-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.sidebar-card-head {
+  background: var(--dark);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--dim);
+}
+.sidebar-card-body { padding: 16px; }
+
+/* INFLATION METER */
+.meter-wrap { margin: 12px 0 8px; }
+.meter-track {
+  height: 6px; background: var(--border);
+  border-radius: 3px; overflow: hidden;
+}
+.meter-fill {
+  height: 100%; border-radius: 3px;
+  background: var(--red);
+  transition: width 0.8s ease;
+}
+.meter-labels {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-m); font-size: 10px;
+  color: var(--muted); letter-spacing: 0.06em;
+  margin-top: 6px;
+}
+
+/* AR CTA SIDEBAR */
+.ar-sidebar {
+  background: linear-gradient(160deg, #0c1f0c, #080f08);
+  border: 1px solid rgba(34,216,124,0.2);
+  border-radius: 4px; padding: 20px;
+}
+.ar-sidebar-eyebrow {
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--green); margin-bottom: 10px;
+}
+.ar-sidebar-headline {
+  font-family: var(--font-d); font-size: 24px;
+  color: var(--white); letter-spacing: 0.02em;
+  margin-bottom: 8px; line-height: 1.1;
+}
+.ar-sidebar-sub {
+  font-size: 13px; color: var(--dim);
+  line-height: 1.6; margin-bottom: 14px;
+}
+.ar-sidebar-xp {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-m); font-size: 11px;
+  color: var(--green); letter-spacing: 0.06em;
+  margin-bottom: 14px;
+}
+.ar-sidebar-btn {
+  display: block; background: var(--green);
+  color: var(--black); font-family: var(--font-d);
+  font-size: 18px; letter-spacing: 0.06em;
+  padding: 13px 16px; border-radius: 3px;
+  text-decoration: none; text-align: center;
+  transition: background 0.15s;
+}
+.ar-sidebar-btn:hover { background: #1bc46d; }
+
+/* OTHER PARKS */
+.park-link-list { list-style: none; }
+.park-link-list li {
+  border-bottom: 1px solid var(--border);
+}
+.park-link-list li:last-child { border-bottom: none; }
+.park-link-list a {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; color: var(--dim);
+  text-decoration: none; font-size: 13px;
+  transition: color 0.15s;
+}
+.park-link-list a:hover { color: var(--text); }
+.park-link-chain {
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.06em; color: var(--muted);
+}
+
+/* ATTRIBUTION */
+.attribution {
+  font-family: var(--font-m); font-size: 10px;
+  color: var(--muted); letter-spacing: 0.06em;
+  padding: 12px 0 0;
+}
+.attribution a { color: var(--muted); }
+
+/* LOADING / ERROR */
+.loading-state {
+  font-family: var(--font-m); font-size: 12px;
+  color: var(--muted); letter-spacing: 0.08em;
+  padding: 32px 0; text-align: center;
+  animation: pulse 1.4s ease infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.error-state {
+  font-family: var(--font-m); font-size: 12px;
+  color: var(--red); letter-spacing: 0.06em;
+  padding: 16px; background: rgba(255,59,48,0.08);
+  border: 1px solid rgba(255,59,48,0.2); border-radius: 3px;
+}
+
+/* FOOTER */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 24px; text-align: center;
+  font-family: var(--font-m); font-size: 10px;
+  letter-spacing: 0.08em; color: var(--muted); line-height: 2;
+}
+footer a { color: var(--muted); text-decoration: none; }
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .page-body { grid-template-columns: 1fr; }
+  .sidebar { order: -1; }
+  .report-cta-inline { flex-direction: column; }
+  .hero h1 { font-size: 42px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://ratingvalue.org" class="nav-logo">Rating<span>Value</span></a>
+  <div class="nav-links">
+    <a href="https://ratingvalue.org/parks.html" class="active">Parks</a>
+    <a href="https://ratingvalue.org/restaurants.html">Dining</a>
+    <a href="https://ratingvalue.org/report.html">Report</a>
+    <a href="https://amusementrating.org" target="_blank">AmusementRating ↗</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-chain" id="heroChain">Loading...</div>
+  <h1 id="heroH1">Did <em id="heroName">—</em> lie about wait times?</h1>
+  <p class="hero-sub" id="heroSub">Live posted waits · Community actual reports · Inflation factor calculated</p>
+
+  <!-- STAT ROW -->
+  <div class="stat-row">
+    <div class="stat-cell">
+      <span class="stat-val amber" id="statAvgPosted">—</span>
+      <span class="stat-lbl">Avg Posted Wait</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-val" id="statAvgActual">—</span>
+      <span class="stat-lbl">Community Actual</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-val red" id="statFactor">—</span>
+      <span class="stat-lbl">Inflation Factor</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-val dim" id="statReports">—</span>
+      <span class="stat-lbl">Community Reports</span>
+    </div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="page-body">
+
+  <!-- MAIN COLUMN -->
+  <div class="main-col">
+
+    <!-- LIVE RIDE TABLE -->
+    <div class="section-head">
+      <span class="section-title">Live Wait Times Right Now</span>
+      <span class="section-tag" id="liveTag">● Updating...</span>
+    </div>
+
+    <div id="rideTableWrap">
+      <div class="loading-state">↻ Fetching live data from Queue-Times...</div>
+    </div>
+
+    <!-- REPORT CTA -->
+    <div class="report-cta-inline">
+      <div class="report-cta-text">
+        <div class="report-cta-label">Were you here today?</div>
+        <div class="report-cta-headline">Report your actual wait</div>
+        <div class="report-cta-sub">Takes 20 seconds. No account needed. Your data fights inflation.</div>
+      </div>
+      <a href="#" id="reportBtn" class="report-cta-btn">Report Now →</a>
+    </div>
+
+    <!-- COMMUNITY STATS -->
+    <div class="section-head">
+      <span class="section-title">Community Inflation Data</span>
+      <span class="section-tag" id="communityTag">Last 30 days</span>
+    </div>
+
+    <div class="community-block" id="communityBlock">
+      <div class="loading-state">↻ Loading community reports...</div>
+    </div>
+
+    <!-- ATTRIBUTION -->
+    <div class="attribution">
+      Live wait data: <a href="https://queue-times.com" target="_blank">Powered by Queue-Times.com</a> · Updated every 5 min ·
+      Community reports submitted via <a href="https://ratingvalue.org/report.html">ratingvalue.org/report</a> ·
+      Inflation factors are calculated ratios, not findings of intentional wrongdoing.
+    </div>
+
+  </div><!-- /main-col -->
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- INFLATION METER -->
+    <div class="sidebar-card">
+      <div class="sidebar-card-head">Inflation Meter</div>
+      <div class="sidebar-card-body">
+        <div style="font-family:var(--font-d); font-size:44px; color:var(--white); line-height:1;" id="meterVal">—</div>
+        <div style="font-family:var(--font-m); font-size:11px; color:var(--muted); letter-spacing:0.08em; margin-bottom:10px;" id="meterLabel">Awaiting community data</div>
+        <div class="meter-wrap">
+          <div class="meter-track">
+            <div class="meter-fill" id="meterFill" style="width:0%"></div>
+          </div>
+          <div class="meter-labels"><span>Accurate</span><span>2× Inflation</span></div>
+        </div>
+        <div style="font-size:13px; color:var(--dim); line-height:1.6; margin-top:10px;" id="meterDesc">
+          The inflation factor is posted ÷ actual wait. Above 1.0× means the sign overstated the line.
+        </div>
+      </div>
+    </div>
+
+    <!-- AR CTA -->
+    <div class="ar-sidebar">
+      <div class="ar-sidebar-eyebrow">🎢 Go Deeper</div>
+      <div class="ar-sidebar-headline">Audit how this park actually operates</div>
+      <p class="ar-sidebar-sub">Wait times are one signal. Log rides, score dispatch intervals, restraint checks, and staff engagement — earn XP doing it.</p>
+      <div class="ar-sidebar-xp">⚡ +50 XP signup bonus · Free forever</div>
+      <a href="https://amusementrating.org" target="_blank" class="ar-sidebar-btn">Join AmusementRating.org →</a>
+    </div>
+
+    <!-- OTHER PARKS -->
+    <div class="sidebar-card">
+      <div class="sidebar-card-head">Other Tracked Parks</div>
+      <ul class="park-link-list" id="otherParks">
+        <li><div class="loading-state" style="padding:16px;">Loading...</div></li>
+      </ul>
+    </div>
+
+  </div><!-- /sidebar -->
+
+</div><!-- /page-body -->
+
+<footer>
+  <a href="https://ratingvalue.org">RatingValue.org</a> ·
+  <a href="https://ratingvalue.org/parks.html">All Parks</a> ·
+  <a href="https://ratingvalue.org/report.html">Report a Wait</a> ·
+  <a href="https://amusementrating.org" target="_blank">AmusementRating.org</a> ·
+  <a href="https://ratingvalue.org/privacy.html">Privacy</a><br>
+  © 2026 Amusement Standards LLC · Asbury Park, NJ ·
+  Powered by <a href="https://queue-times.com" target="_blank">Queue-Times.com</a>
+</footer>
+
+<script>
+// ── PARK REGISTRY (mirrors rv-parks Worker) ──────────────────────────────────
+const PARKS = [
+  { slug:'magic-kingdom',              name:'Magic Kingdom',               chain:'Disney',    state:'FL' },
+  { slug:'epcot',                      name:'EPCOT',                       chain:'Disney',    state:'FL' },
+  { slug:'hollywood-studios',          name:'Hollywood Studios',           chain:'Disney',    state:'FL' },
+  { slug:'animal-kingdom',             name:'Animal Kingdom',              chain:'Disney',    state:'FL' },
+  { slug:'disneyland',                 name:'Disneyland',                  chain:'Disney',    state:'CA' },
+  { slug:'disney-california-adventure',name:'Disney California Adventure', chain:'Disney',    state:'CA' },
+  { slug:'universal-studios-florida',  name:'Universal Studios Florida',   chain:'Universal', state:'FL' },
+  { slug:'islands-of-adventure',       name:'Islands of Adventure',        chain:'Universal', state:'FL' },
+  { slug:'epic-universe',              name:'Epic Universe',               chain:'Universal', state:'FL' },
+  { slug:'universal-studios-hollywood',name:'Universal Studios Hollywood', chain:'Universal', state:'CA' },
+  { slug:'six-flags-great-adventure',  name:'Six Flags Great Adventure',   chain:'Six Flags', state:'NJ' },
+  { slug:'six-flags-magic-mountain',   name:'Six Flags Magic Mountain',    chain:'Six Flags', state:'CA' },
+  { slug:'cedar-point',                name:'Cedar Point',                 chain:'Cedar Fair', state:'OH' },
+  { slug:'kings-island',               name:'Kings Island',                chain:'Cedar Fair', state:'OH' },
+  { slug:'knotts-berry-farm',          name:"Knott's Berry Farm",          chain:'Cedar Fair', state:'CA' },
+  { slug:'canadas-wonderland',         name:"Canada's Wonderland",         chain:'Cedar Fair', state:'ON' },
+  { slug:'dollywood',                  name:'Dollywood',                   chain:'Herschend',  state:'TN' },
+  { slug:'busch-gardens-tampa',        name:'Busch Gardens Tampa',         chain:'SeaWorld',   state:'FL' },
+  { slug:'hersheypark',                name:'Hersheypark',                 chain:'Hershey',    state:'PA' },
+  { slug:'seaworld-orlando',           name:'SeaWorld Orlando',            chain:'SeaWorld',   state:'FL' },
+];
+
+const RV_PARKS  = 'https://rv-parks.ratingvalue.workers.dev';
+const RV_REPORT = 'https://rv-report.ratingvalue.workers.dev';
+
+// ── DETECT CURRENT PARK FROM URL ────────────────────────────────────────────
+function getSlug() {
+  // Support: /parks/six-flags-great-adventure.html OR ?park=six-flags-great-adventure
+  const path   = window.location.pathname;
+  const match  = path.match(/\/parks\/([^/.]+)/);
+  if (match) return match[1];
+  return new URLSearchParams(window.location.search).get('park') || 'six-flags-great-adventure';
+}
+
+const SLUG = getSlug();
+const PARK = PARKS.find(p => p.slug === SLUG) || { slug: SLUG, name: SLUG, chain: '—', state: '—' };
+
+// ── SEO / META ───────────────────────────────────────────────────────────────
+document.getElementById('pageTitle').textContent   = `${PARK.name} Wait Time Inflation — RatingValue.org`;
+document.getElementById('pageDesc').content        = `Are ${PARK.name} wait times accurate? Live posted vs actual wait data and community inflation reports.`;
+document.getElementById('ogTitle').content         = `Did ${PARK.name} lie about wait times?`;
+document.getElementById('ogDesc').content          = `See live inflation data and community reports for ${PARK.name}. Posted vs actual wait times tracked.`;
+document.getElementById('ogUrl').content           = `https://ratingvalue.org/parks/${SLUG}.html`;
+document.getElementById('canonical').href          = `https://ratingvalue.org/parks/${SLUG}.html`;
+document.getElementById('heroChain').textContent   = `${PARK.chain} · ${PARK.state}`;
+document.getElementById('heroName').textContent    = PARK.name;
+document.getElementById('reportBtn').href          = `https://ratingvalue.org/report.html?park=${SLUG}`;
+
+// ── RIDE TABLE ───────────────────────────────────────────────────────────────
+function factorPill(factor) {
+  if (!factor) return `<span class="factor-pill none">No data yet</span>`;
+  const f = parseFloat(factor);
+  const cls = f > 1.3 ? 'high' : f > 1.1 ? 'mid' : 'low';
+  return `<span class="factor-pill ${cls}">${f.toFixed(2)}×</span>`;
+}
+
+function renderRideTable(rides) {
+  if (!rides || !rides.length) {
+    return `<div class="error-state">No ride data available right now. Queue-Times may be updating.</div>`;
+  }
+
+  const rows = rides.map(r => {
+    const open  = r.isOpen;
+    const wait  = r.postedWait;
+    const actualClass = !r.actualWait ? 'none'
+                      : r.inflationFactor > 1.15 ? 'inflated' : 'honest';
+    const actualText  = r.actualWait ? r.actualWait + ' min' : 'Be first →';
+
+    return `<tr>
+      <td>
+        <span class="status-dot ${open ? 'open' : 'closed'}"></span>
+        <span class="ride-name">${r.name}</span>
+        ${r.land ? `<br><span class="ride-land">${r.land}</span>` : ''}
+      </td>
+      <td><span class="wait-posted">${open && wait ? wait + ' min' : '—'}</span></td>
+      <td><span class="wait-actual ${actualClass}">${open ? actualText : 'Closed'}</span></td>
+      <td>${open ? factorPill(r.inflationFactor) : '<span class="factor-pill none">Closed</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  return `<table class="ride-table">
+    <thead><tr>
+      <th>Ride</th>
+      <th>Posted</th>
+      <th>Community Actual</th>
+      <th>Factor</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// ── COMMUNITY BLOCK ──────────────────────────────────────────────────────────
+function renderCommunity(stats) {
+  if (!stats || stats.countWithBoth < 1) {
+    return `<div class="community-empty">
+      No community reports yet for ${PARK.name}.<br>
+      Be the first — your report puts this park on the inflation map.<br><br>
+      <a href="https://ratingvalue.org/report.html?park=${SLUG}" style="color:var(--red); font-family:var(--font-m); font-size:11px; letter-spacing:0.08em;">→ Submit your actual wait time</a>
+    </div>`;
+  }
+
+  const f = stats.avgInflation;
+  const fClass = f > 1.3 ? 'red' : f > 1.1 ? 'amber' : 'green';
+
+  return `
+    <div style="font-family:var(--font-m); font-size:11px; letter-spacing:0.08em; color:var(--dim); margin-bottom:6px;">
+      Based on ${stats.countWithBoth} verified reports with both posted and actual wait times
+    </div>
+    <div class="community-stat-grid">
+      <div class="community-stat-cell">
+        <span class="community-stat-val" style="color:var(--${fClass})">${f.toFixed(2)}×</span>
+        <span class="community-stat-lbl">Avg Inflation</span>
+      </div>
+      <div class="community-stat-cell">
+        <span class="community-stat-val">${stats.medianInflation?.toFixed(2) || '—'}×</span>
+        <span class="community-stat-lbl">Median Inflation</span>
+      </div>
+      <div class="community-stat-cell">
+        <span class="community-stat-val amber">${stats.avgPosted || '—'}</span>
+        <span class="community-stat-lbl">Avg Posted (min)</span>
+      </div>
+      <div class="community-stat-cell">
+        <span class="community-stat-val ${f > 1.1 ? 'green' : 'amber'}">${stats.avgActual || '—'}</span>
+        <span class="community-stat-lbl">Avg Actual (min)</span>
+      </div>
+      <div class="community-stat-cell">
+        <span class="community-stat-val">${stats.pctInflated || '—'}%</span>
+        <span class="community-stat-lbl">Rides Inflated</span>
+      </div>
+      <div class="community-stat-cell">
+        <span class="community-stat-val dim">${stats.count}</span>
+        <span class="community-stat-lbl">Total Reports</span>
+      </div>
+    </div>`;
+}
+
+// ── INFLATION METER ──────────────────────────────────────────────────────────
+function updateMeter(factor) {
+  if (!factor) return;
+  const f    = parseFloat(factor);
+  const pct  = Math.min(((f - 1) / 1) * 100, 100); // 1.0 = 0%, 2.0 = 100%
+  const col  = f > 1.3 ? 'var(--red)' : f > 1.1 ? 'var(--amber)' : 'var(--green)';
+  const desc = f > 1.5 ? `Parks post inflated times to sell Lightning Lane & Express Pass upgrades. ${PARK.name} is among the worst offenders tracked.`
+             : f > 1.2 ? `${PARK.name} consistently overstates wait times. Budget extra time or skip the upcharge.`
+             : f > 1.05 ? `Mild inflation — posted times are slightly overstated on average.`
+             : `${PARK.name} posts relatively accurate wait times compared to the 20 parks tracked.`;
+
+  document.getElementById('meterVal').textContent   = f.toFixed(2) + '×';
+  document.getElementById('meterVal').style.color   = col;
+  document.getElementById('meterFill').style.width  = pct + '%';
+  document.getElementById('meterFill').style.background = col;
+  document.getElementById('meterLabel').textContent = f > 1.1 ? 'Inflated — sign overstates the line' : 'Relatively accurate';
+  document.getElementById('meterDesc').textContent  = desc;
+}
+
+// ── OTHER PARKS LIST ─────────────────────────────────────────────────────────
+function renderOtherParks() {
+  const others = PARKS.filter(p => p.slug !== SLUG).slice(0, 8);
+  document.getElementById('otherParks').innerHTML = others.map(p =>
+    `<li><a href="/parks/${p.slug}.html">
+      ${p.name}
+      <span class="park-link-chain">${p.chain}</span>
+    </a></li>`
+  ).join('');
+}
+
+// ── HERO STATS ───────────────────────────────────────────────────────────────
+function updateHeroStats(liveData, communityStats) {
+  const avgPosted = liveData?.avgPostedWait;
+  const avgActual = communityStats?.avgActual;
+  const factor    = communityStats?.avgInflation;
+  const reports   = communityStats?.count || 0;
+
+  document.getElementById('statAvgPosted').textContent = avgPosted ? avgPosted + ' min' : '—';
+  document.getElementById('statAvgActual').textContent = avgActual ? avgActual + ' min' : 'No data';
+  document.getElementById('statAvgActual').className   = 'stat-val ' + (avgActual && factor > 1.1 ? 'red' : avgActual ? 'green' : 'dim');
+  document.getElementById('statFactor').textContent    = factor ? factor.toFixed(2) + '×' : 'Collecting';
+  document.getElementById('statFactor').className      = 'stat-val ' + (factor > 1.3 ? 'red' : factor > 1.1 ? 'amber' : factor ? 'green' : 'dim');
+  document.getElementById('statReports').textContent   = reports || 'Be first';
+  document.getElementById('liveTag').textContent       = '● Live · Queue-Times.com';
+}
+
+// ── MAIN LOAD ────────────────────────────────────────────────────────────────
+async function loadPage() {
+  renderOtherParks();
+
+  // Fetch live + community data in parallel
+  const [liveRes, communityRes] = await Promise.allSettled([
+    fetch(`${RV_PARKS}/parks/${SLUG}`).then(r => r.json()),
+    fetch(`${RV_REPORT}/park/${SLUG}`).then(r => r.json()),
+  ]);
+
+  const liveData      = liveRes.status      === 'fulfilled' ? liveRes.value      : null;
+  const communityData = communityRes.status === 'fulfilled' ? communityRes.value : null;
+
+  // Ride table — merge community inflation into live rides
+  if (liveData?.rides) {
+    const communityByRide = {};
+    // If community data has per-ride breakdown, index it
+    if (communityData?.topRides) {
+      communityData.topRides.forEach(r => {
+        communityByRide[r.ride] = r.avgInflation;
+      });
+    }
+
+    const ridesWithInflation = liveData.rides.map(r => ({
+      ...r,
+      inflationFactor: communityByRide[r.name] || null,
+      actualWait: communityByRide[r.name] && liveData.live?.avgPostedWait
+        ? Math.round((liveData.live.avgPostedWait / communityByRide[r.name]))
+        : null,
+    }));
+
+    document.getElementById('rideTableWrap').innerHTML = renderRideTable(ridesWithInflation);
+  } else if (liveData?.live?.qtError) {
+    document.getElementById('rideTableWrap').innerHTML =
+      `<div class="error-state">Queue-Times unavailable right now. Try again in a few minutes.</div>`;
+  }
+
+  // Community stats
+  const stats = communityData?.stats || null;
+  document.getElementById('communityBlock').innerHTML = renderCommunity(stats);
+
+  // Hero stats
+  updateHeroStats(liveData?.live, stats);
+
+  // Meter
+  if (stats?.avgInflation) updateMeter(stats.avgInflation);
+}
+
+loadPage().catch(e => {
+  document.getElementById('rideTableWrap').innerHTML =
+    `<div class="error-state">Failed to load park data. Check your Worker deployment.</div>`;
+  console.error(e);
+});
+</script>
+</body>
+</html>
